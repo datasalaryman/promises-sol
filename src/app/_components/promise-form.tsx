@@ -11,14 +11,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Wallet, CalendarIcon } from "lucide-react"
+import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { WalletDisconnectButton, WalletMultiButton } from "@solana/wallet-adapter-react-ui"
+import { useConnection, useWallet } from "@solana/wallet-adapter-react"
+// Default styles that can be overridden by your app
+import '@solana/wallet-adapter-react-ui/styles.css';
 
-export default function PromiseForm() {
+export const PromiseForm = () =>  {
+  const { connection } = useConnection();
   const [promise, setPromise] = useState("")
   const [promiseSize, setPromiseSize] = useState("small")
-  const [isWalletConnected, setIsWalletConnected] = useState(false)
+  const { publicKey } = useWallet();
   const [date, setDate] = useState<Date>()
   const [hour, setHour] = useState("12")
   const [minute, setMinute] = useState("00")
@@ -47,10 +52,9 @@ export default function PromiseForm() {
           <CardTitle>Make a Promise</CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">
-          <Button onClick={() => setIsWalletConnected(!isWalletConnected)} variant="outline" className="w-full">
-            <Wallet className="mr-2 h-4 w-4" />
-            {isWalletConnected ? "Wallet Connected" : "Connect Wallet"}
-          </Button>
+          {
+            publicKey ? <WalletDisconnectButton/> : <WalletMultiButton/>
+          }
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
@@ -147,8 +151,8 @@ export default function PromiseForm() {
               </RadioGroup>
             </div>
 
-            <Button type="submit" className="w-full" disabled={!isWalletConnected}>
-              {isWalletConnected ? "Make Promise" : "Connect Wallet to Continue"}
+            <Button type="submit" className="w-full" disabled={!publicKey}>
+              {publicKey ? "Make Promise" : "Connect Wallet to Continue"}
             </Button>
           </form>
         </CardContent>
