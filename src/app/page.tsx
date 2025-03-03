@@ -1,4 +1,4 @@
-import PromiseForm from "@/app/_components/promise-form"
+import { PromiseForm } from "@/app/_components/promise-form"
 
 export default async function Home() {
   return (
