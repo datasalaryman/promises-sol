@@ -47,3 +47,6 @@ yarn-error.log*
 
 # Sandbox environments
 src/app/sandbox
+
+# drizzle
+drizzle/**
