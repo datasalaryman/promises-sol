@@ -21,8 +21,8 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 
 export const PromiseForm = () =>  {
   const { connection } = useConnection();
-  const [promise, setPromise] = useState("")
-  const [promiseSize, setPromiseSize] = useState("small")
+  const [promiseContent, setPromiseContent] = useState("")
+  const [promiseLamports, setPromiseLamports] = useState(10000000)
   const { publicKey } = useWallet();
   const [date, setDate] = useState<Date>()
   const [hour, setHour] = useState("12")
@@ -31,17 +31,18 @@ export const PromiseForm = () =>  {
 
   const handlePromiseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (e.target.value.length <= 255) {
-      setPromise(e.target.value)
+      setPromiseContent(e.target.value)
     }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     console.log({
-      promise,
-      date,
+      content: promiseContent,
+      date: date,
       time: `${hour}:${minute} ${period}`,
-      promiseSize,
+      promiseLamports,
+      wallet: publicKey?.toString()
     })
   }
 
@@ -62,11 +63,11 @@ export const PromiseForm = () =>  {
               <Textarea
                 id="promise"
                 placeholder="Enter your promise here..."
-                value={promise}
+                value={promiseContent}
                 onChange={handlePromiseChange}
                 required
               />
-              <p className="text-xs text-muted-foreground text-right">{promise.length}/255 characters</p>
+              <p className="text-xs text-muted-foreground text-right">{promiseContent.length}/255 characters</p>
             </div>
 
             <div className="space-y-4">
@@ -135,17 +136,17 @@ export const PromiseForm = () =>  {
 
             <div className="space-y-2">
               <Label>Promise Size</Label>
-              <RadioGroup value={promiseSize} onValueChange={setPromiseSize} className="flex flex-col space-y-2">
+              <RadioGroup value={`${promiseLamports}`} onValueChange={(value) => setPromiseLamports(parseInt(value))} className="flex flex-col space-y-2">
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="small" id="small" />
+                  <RadioGroupItem value={"10000000"} id="small" />
                   <Label htmlFor="small">Small (0.01 SOL)</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="medium" id="medium" />
+                  <RadioGroupItem value={"50000000"} id="medium" />
                   <Label htmlFor="medium">Medium (0.05 SOL)</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="large" id="large" />
+                  <RadioGroupItem value={"100000000"} id="large" />
                   <Label htmlFor="large">Large (0.1 SOL)</Label>
                 </div>
               </RadioGroup>
