@@ -145,7 +145,7 @@ export const PromiseForm = () =>  {
                       <SelectTrigger>
                         <SelectValue placeholder="Hour"/>
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-h-64 md:max-h-72">
                         <SelectGroup>
                           {Array.from(Array(24).keys()).map((h) => (
                             <SelectItem key={h} value={h.toString()}>
@@ -160,7 +160,7 @@ export const PromiseForm = () =>  {
                       <SelectTrigger>
                         <SelectValue placeholder="Min" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-h-64 md:max-h-72">
                         <SelectGroup>
                           {Array.from({length:12}, (_, i) => (i) * 5).map((m) => (
                             <SelectItem key={m} value={m.toString()}>
