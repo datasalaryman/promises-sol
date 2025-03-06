@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
 import type React from "react"
-
 import { useState } from "react"
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -13,11 +13,22 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from "@/components/ui/select"
 import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { WalletDisconnectButton, WalletMultiButton } from "@solana/wallet-adapter-react-ui"
+import { WalletDisconnectButton, WalletModalProvider, WalletMultiButton } from "@solana/wallet-adapter-react-ui"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
 import { DateTime } from "luxon"; 
 // Default styles that can be overridden by your app
 import '@solana/wallet-adapter-react-ui/styles.css';
+
+
+const WalletMultiButtonDynamic = dynamic(
+  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
+  { ssr: false }
+);
+
+const WalletDisconnectButtonDynamic = dynamic(
+  async () => (await import('@solana/wallet-adapter-react-ui')).WalletDisconnectButton,
+  { ssr: false }
+)
 
 export const PromiseForm = () =>  {
 
@@ -101,9 +112,11 @@ export const PromiseForm = () =>  {
           <CardTitle>Make a Promise</CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">
-          {
-            publicKey ? <WalletDisconnectButton/> : <WalletMultiButton/>
-          }
+          <WalletModalProvider>
+            { 
+              publicKey ? <WalletDisconnectButtonDynamic/> : <WalletMultiButtonDynamic />
+            }
+          </WalletModalProvider>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
