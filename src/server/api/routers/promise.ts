@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { promisesSelf } from "@/server/db/schema";
 
-export const postRouter = createTRPCRouter({
+export const promiseRouter = createTRPCRouter({
   create: publicProcedure
     .input(z.object({
       content: z.string(),
