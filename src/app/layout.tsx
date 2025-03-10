@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import "@/styles/globals.css";
 
 import { GeistSans } from "geist/font/sans";
@@ -16,7 +17,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>
-        {children}
+        <main>{children}</main>
+        <Toaster />
       </body>
     </html>
   );
