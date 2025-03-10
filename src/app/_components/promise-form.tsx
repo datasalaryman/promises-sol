@@ -19,6 +19,7 @@ import { DateTime } from "luxon";
 // Default styles that can be overridden by your app
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { api } from "@/trpc/react";
+import { toast } from "sonner";
 
 
 const WalletMultiButtonDynamic = dynamic(
@@ -107,13 +108,18 @@ export const PromiseForm = () =>  {
       lamports: BigInt(promiseLamports), 
       wallet: publicKey?.toString() ?? ''
     })
+    
+    toast(
+      "Let's pretend you created a promise with SOL!", 
+      {
+        description: `${BigInt(promiseLamports).toString()} lamports sent to the contract and can be released on ${epochToDateOnly(epochTime).toISODate()}`
+      }
+    )
 
-    console.log({
-      content: promiseContent,
-      epochTime: epochTime, 
-      lamports: promiseLamports,
-      wallet: publicKey?.toString()
-    })
+    setPromiseContent("")
+    setPromiseLamports(10000000)
+    setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60)
+
   }
 
   return (
