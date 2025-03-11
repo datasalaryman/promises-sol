@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { promisesSelf } from "@/server/db/schema";
+import { eq } from "drizzle-orm";
 
 export const promiseRouter = createTRPCRouter({
   create: publicProcedure
@@ -19,5 +20,46 @@ export const promiseRouter = createTRPCRouter({
         promiseWallet: input.wallet
       });
     }),
-
+  getAll: publicProcedure
+    .input(z.object({
+      wallet: z.string()
+    }))
+    .output(
+      z.object({
+        id: z.number(),
+        createdAt: z.date(),
+        updatedAt: z.date().nullable(),
+        promiseContent: z.string().nullable(), 
+        promiseEpoch: z.bigint().nullable(), 
+        promiseLamports: z.bigint().nullable(), 
+        promiseWallet: z.string().nullable()
+      }).array()
+    )
+    .query( async ({ ctx, input }) => {
+      const promises = await ctx.db.query.promisesSelf.findMany({
+        where: eq(promisesSelf.promiseWallet, input.wallet)
+      })
+      return promises
+    }),
+  getOne: publicProcedure
+    .input(z.object({
+      id: z.number()
+    }))
+    .output(
+      z.object({
+        id: z.number(),
+        createdAt: z.date(),
+        updatedAt: z.date().nullable(),
+        promiseContent: z.string().nullable(), 
+        promiseEpoch: z.bigint().nullable(), 
+        promiseLamports: z.bigint().nullable(), 
+        promiseWallet: z.string().nullable()
+      }).nullish()
+    )
+    .query( async ({ ctx, input }) => {
+      const promise = await ctx.db.query.promisesSelf.findFirst({
+        where: eq(promisesSelf.id, input.id)
+      })
+      return promise
+    })
 });
