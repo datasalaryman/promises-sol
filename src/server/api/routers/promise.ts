@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { promisesSelf } from "@/server/db/schema";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 export const promiseRouter = createTRPCRouter({
   create: publicProcedure
@@ -37,7 +37,8 @@ export const promiseRouter = createTRPCRouter({
     )
     .query( async ({ ctx, input }) => {
       const promises = await ctx.db.query.promisesSelf.findMany({
-        where: eq(promisesSelf.promiseWallet, input.wallet)
+        where: eq(promisesSelf.promiseWallet, input.wallet), 
+        orderBy: desc(promisesSelf.promiseEpoch)
       })
       return promises
     }),

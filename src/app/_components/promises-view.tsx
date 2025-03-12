@@ -90,23 +90,8 @@ export const PromisesView = () =>  {
         }
       </WalletModalProvider>
       <div className="flex flex-wrap basis-1/2 py-9">
-      {
-        result?.length ?? 0 > 0 ? result?.map((promise) => {
-          return (
-            <div key={promise.id} className="pr-2 pb-2">
-              <Card className="w-80 h-40">
-                <CardHeader>
-                  <CardTitle>{promise.promiseContent}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-8">
-                  <strong>Expires</strong>: {promise.promiseEpoch} <br/>
-                  <strong>Size</strong>: {parseInt(promise.promiseLamports?.toString() ?? '0') / (10 ** 9)} SOL
-                </CardContent>
-              </Card>
-            </div>
-        )}) : (
-          <div className="pr-2 pb-2">
-            <Link href="/" target="_blank">
+        <div className="pr-2 pb-2">
+            <Link href="/">
               <Card className="w-80 h-40 outline-dashed">
                 <CardContent className="space-y-8 items-center content-center text-center w-full h-full">
                     Create a promise
@@ -114,8 +99,24 @@ export const PromisesView = () =>  {
               </Card>
             </Link>
         </div>
-        )
-      }
+        {
+          result?.length ?? 0 > 0 ? result?.map((promise) => {
+            return (
+              <div key={promise.id} className="pr-2 pb-2">
+                <Card className="w-80 h-40">
+                  <CardHeader>
+                    <CardTitle className="truncate" >
+                      {promise.promiseContent}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-8">
+                    <strong>Expires</strong>: {promise.promiseEpoch} <br/>
+                    <strong>Size</strong>: {parseInt(promise.promiseLamports?.toString() ?? '0') / (10 ** 9)} SOL
+                  </CardContent>
+                </Card>
+              </div>
+          )}) : null
+        }
       </div>
 
     </div>
