@@ -20,6 +20,7 @@ import { DateTime } from "luxon";
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 
 const WalletMultiButtonDynamic = dynamic(
@@ -123,12 +124,12 @@ export const PromiseForm = () =>  {
   }
 
   return (
-    <div className="container max-w-md py-10">
+    <div className="max-w-md min-h-fit py-5">
       <Card>
         <CardHeader>
           <CardTitle>Make a Promise</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-8">
+        <CardContent className="space-y-2 p-4 pt-0">
           <WalletModalProvider>
             { 
               publicKey ? <WalletDisconnectButtonDynamic/> : <WalletMultiButtonDynamic />
@@ -147,7 +148,7 @@ export const PromiseForm = () =>  {
                 <p className="text-xs text-muted-foreground text-right">{promiseContent.length}/255 characters</p>
               </div>
 
-              <div className="space-y-4">
+              <div className="">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Date</Label>
@@ -227,6 +228,10 @@ export const PromiseForm = () =>  {
                 {publicKey ? "Make Promise" : "Connect Wallet to Continue"}
               </Button>
             </form>
+            <div className="pt-2 text-center">
+              <Link href="/dash" className="text-xs text-gray-400 underline">View Promises</Link>
+            </div>
+
         </CardContent>
       </Card>
     </div>
