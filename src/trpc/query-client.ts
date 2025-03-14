@@ -1,11 +1,12 @@
 import {
   defaultShouldDehydrateQuery,
   QueryClient,
+  MutationCache
 } from "@tanstack/react-query";
 import SuperJSON from "superjson";
 
-export const createQueryClient = () =>
-  new QueryClient({
+export const createQueryClient = () => {
+  const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
         // With SSR, we usually want to set some default staleTime
@@ -22,4 +23,12 @@ export const createQueryClient = () =>
         deserializeData: SuperJSON.deserialize,
       },
     },
-  });
+    mutationCache: new MutationCache({
+      onSuccess: () => {
+        queryClient.invalidateQueries()
+      },
+    }),
+  })
+
+  return queryClient
+};

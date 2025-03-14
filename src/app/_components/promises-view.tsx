@@ -28,13 +28,12 @@ export const PromisesView = () =>  {
 
   console.log(publicKey)
 
-  const {data: result, isLoading, isError, refetch: refetchPromises } = api.promise.getAll.useQuery({ wallet: publicKey?.toString() ?? '' })
+  const {data: result, isLoading, isError } = api.promise.getAll.useQuery({ wallet: publicKey?.toString() ?? '' })
 
   const releasePromise = api.promise.release.useMutation()
 
-  const handlePromiseRelease = (id: number) => {
+  const handlePromiseRelease = async (id: number) => {
     releasePromise.mutate({id: id}); 
-    refetchPromises();
   }
 
   if (isLoading) {
@@ -132,7 +131,7 @@ export const PromisesView = () =>  {
                         <Drawer.Description />
                       </div>
                       <Drawer.Close asChild>
-                        <Button onClick={() => handlePromiseRelease(promise.id)}>Release Promise</Button>
+                        <Button onClick={async() => await handlePromiseRelease(promise.id)}>Release Promise</Button>
                       </Drawer.Close>
                     </div>
                   </Drawer.Content>
