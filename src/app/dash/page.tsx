@@ -4,7 +4,7 @@ import { PromisesView } from "@/app/_components/promises-view"
 
 export default async function Home() {
   return (
-    <main className="flex flex-col h-screen mx-28">
+    <main className="flex flex-col h-screen px-4 sm:px-28 w-full">
       <WalletContext>
         <TRPCReactProvider>
           <h1 className="font-bold text-xl py-9"> Your Promises</h1>
