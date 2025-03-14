@@ -10,7 +10,7 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import { Drawer } from "vaul";
-
+import { Button } from "@/components/ui/button";
 
 const WalletMultiButtonDynamic = dynamic(
   async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
@@ -28,7 +28,14 @@ export const PromisesView = () =>  {
 
   console.log(publicKey)
 
-  const {data: result, isLoading, isError } = api.promise.getAll.useQuery({ wallet: publicKey?.toString() ?? '' })
+  const {data: result, isLoading, isError, refetch: refetchPromises } = api.promise.getAll.useQuery({ wallet: publicKey?.toString() ?? '' })
+
+  const releasePromise = api.promise.release.useMutation()
+
+  const handlePromiseRelease = (id: number) => {
+    releasePromise.mutate({id: id}); 
+    refetchPromises();
+  }
 
   if (isLoading) {
     return (
@@ -115,13 +122,18 @@ export const PromisesView = () =>  {
                     // The gap between the edge of the screen and the drawer is 8px in this case.
                     style={{ '--initial-transform': 'calc(100% + 8px)' } as React.CSSProperties}
                   >
-                    <div className="bg-zinc-50 h-full w-full grow p-5 flex flex-col rounded-none">
-                      <div className="max-w-md">
-                        <Drawer.Title className="font-medium mb-2 text-wrap break-words">{promise.promiseContent}</Drawer.Title>
-                        <div><strong>Expires: </strong> {promise.promiseEpoch}</div>
-                        <div><strong>Size: </strong> {parseInt(promise.promiseLamports?.toString() ?? '0') / (10 ** 9)} SOL</div>
+                    <div className="bg-zinc-50 h-full w-full grow p-5 flex flex-col rounded-none place-content-between">
+                      <div className="max-w-md place-content-between">
+                        <div>
+                          <Drawer.Title className="font-medium mb-2 text-wrap break-words">{promise.promiseContent}</Drawer.Title>
+                          <div><strong>Expires: </strong> {promise.promiseEpoch}</div>
+                          <div><strong>Size: </strong> {parseInt(promise.promiseLamports?.toString() ?? '0') / (10 ** 9)} SOL</div>
+                        </div>
                         <Drawer.Description />
                       </div>
+                      <Drawer.Close asChild>
+                        <Button onClick={() => handlePromiseRelease(promise.id)}>Release Promise</Button>
+                      </Drawer.Close>
                     </div>
                   </Drawer.Content>
                 </Drawer.Portal>

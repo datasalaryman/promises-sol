@@ -20,6 +20,15 @@ export const promiseRouter = createTRPCRouter({
         promiseWallet: input.wallet
       });
     }),
+    release: publicProcedure
+    .input(z.object({
+      id: z.number()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(promisesSelf).where(
+        eq(promisesSelf.id, input.id)
+      );
+    }),
   getAll: publicProcedure
     .input(z.object({
       wallet: z.string()
