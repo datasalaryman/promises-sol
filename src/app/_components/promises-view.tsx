@@ -1,25 +1,15 @@
 "use client";
 
 import type React from "react"
-import { useState } from "react"
 import dynamic from "next/dynamic";
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Textarea } from "@/components/ui/textarea"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from "@/components/ui/select"
-import { CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui"
-import { useConnection, useWallet } from "@solana/wallet-adapter-react"
-import { DateTime } from "luxon"; 
+import { useWallet } from "@solana/wallet-adapter-react"
 // Default styles that can be overridden by your app
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { api } from "@/trpc/react";
 import Link from "next/link";
+import { Drawer } from "vaul";
 
 
 const WalletMultiButtonDynamic = dynamic(
@@ -44,11 +34,11 @@ export const PromisesView = () =>  {
     return (
       <div className="max-w-full">
         <WalletModalProvider>
-          { 
+          {
             publicKey ? <WalletDisconnectButtonDynamic/> : <WalletMultiButtonDynamic />
           }
         </WalletModalProvider>
-        <div className="flex flex-wrap basis-1/2 py-9">
+        <div className="flex flex-col sm:flex-row flex-nowrap sm:flex-wrap basis-1/2 py-9">
           <div key="loading" className="pr-2 pb-2">
             <Card className="w-80 h-40">
               <CardContent className="space-y-8 items-center content-center text-center w-full h-full">
@@ -65,11 +55,11 @@ export const PromisesView = () =>  {
     return (
       <div className="max-w-full">
         <WalletModalProvider>
-          { 
+          {
             publicKey ? <WalletDisconnectButtonDynamic/> : <WalletMultiButtonDynamic />
           }
         </WalletModalProvider>
-        <div className="flex flex-wrap basis-1/2 py-9">
+        <div className="flex flex-col items-center flex-nowrap sm:flex-wrap basis-1/2 py-9">
           <div key="error" className="pr-2 pb-2">
             <Card className="w-80 h-40">
               <CardContent className="space-y-8 items-center content-center text-center w-full h-full">
@@ -85,11 +75,11 @@ export const PromisesView = () =>  {
   return (
     <div className="max-w-full">
       <WalletModalProvider>
-        { 
+        {
           publicKey ? <WalletDisconnectButtonDynamic/> : <WalletMultiButtonDynamic />
         }
       </WalletModalProvider>
-      <div className="flex flex-wrap basis-1/2 py-9">
+      <div className="flex flex-col sm:flex-row flex-nowrap sm:flex-wrap basis-1/2 py-9">
         <div className="pr-2 pb-2">
             <Link href="/">
               <Card className="w-80 h-40 outline-dashed">
@@ -102,19 +92,41 @@ export const PromisesView = () =>  {
         {
           result?.length ?? 0 > 0 ? result?.map((promise) => {
             return (
-              <div key={promise.id} className="pr-2 pb-2">
-                <Card className="w-80 h-40">
-                  <CardHeader>
-                    <CardTitle className="truncate" >
-                      {promise.promiseContent}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-8">
-                    <strong>Expires</strong>: {promise.promiseEpoch} <br/>
-                    <strong>Size</strong>: {parseInt(promise.promiseLamports?.toString() ?? '0') / (10 ** 9)} SOL
-                  </CardContent>
-                </Card>
-              </div>
+              <Drawer.Root key={promise.id} direction="right">
+                <Drawer.Trigger asChild>
+                  <div className="pr-2 pb-2">
+                    <Card className="w-80 h-40 hover:border-black">
+                      <CardHeader>
+                        <CardTitle className="truncate" >
+                          {promise.promiseContent}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-8">
+                        <strong>Expires</strong>: {promise.promiseEpoch} <br/>
+                        <strong>Size</strong>: {parseInt(promise.promiseLamports?.toString() ?? '0') / (10 ** 9)} SOL
+                      </CardContent>
+                    </Card>
+                  </div>
+                </Drawer.Trigger>
+                <Drawer.Portal>
+                  <Drawer.Overlay className="fixed inset-0 bg-black/40" />
+                  <Drawer.Content
+                    className="right-0 top-0 bottom-0 fixed z-10 outline-none w-2/3 sm:w-1/2 flex"
+                    // The gap between the edge of the screen and the drawer is 8px in this case.
+                    style={{ '--initial-transform': 'calc(100% + 8px)' } as React.CSSProperties}
+                  >
+                    <div className="bg-zinc-50 h-full w-full grow p-5 flex flex-col rounded-none">
+                      <div className="max-w-md">
+                        <Drawer.Title className="font-medium mb-2 text-wrap break-words">{promise.promiseContent}</Drawer.Title>
+                        <div><strong>Expires: </strong> {promise.promiseEpoch}</div>
+                        <div><strong>Size: </strong> {parseInt(promise.promiseLamports?.toString() ?? '0') / (10 ** 9)} SOL</div>
+                        <Drawer.Description />
+                      </div>
+                    </div>
+                  </Drawer.Content>
+                </Drawer.Portal>
+              </Drawer.Root>
+
           )}) : null
         }
       </div>
