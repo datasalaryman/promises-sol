@@ -24,8 +24,8 @@ export const createQueryClient = () => {
       },
     },
     mutationCache: new MutationCache({
-      onSuccess: () => {
-        queryClient.invalidateQueries()
+      onSuccess: async () => {
+        await queryClient.invalidateQueries()
       },
     }),
   })
