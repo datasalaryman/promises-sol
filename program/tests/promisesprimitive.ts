@@ -2,7 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { BN, Program } from "@coral-xyz/anchor";
 import { Promisesprimitive } from "../target/types/promisesprimitive";
 import { assert } from "console";
-import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
+import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, SystemProgram } from "@solana/web3.js";
 
 describe("promisesprimitive", async () => {
   // Configure the client to use the local cluster.
@@ -50,9 +50,14 @@ describe("promisesprimitive", async () => {
       .accounts({
         signer: newAccountKp.publicKey,
       })
-      .signers([newAccountKp])?.rpc() ?? undefined;
-    
-    console.log(makeTx)
+      .signers([newAccountKp])?.transaction() ?? undefined;
+
+    const makeTxConfirmation = await sendAndConfirmTransaction(
+      provider.connection, 
+      makeTx, 
+      [newAccountKp]
+    )
+    console.log(makeTxConfirmation)
 
   });
 
