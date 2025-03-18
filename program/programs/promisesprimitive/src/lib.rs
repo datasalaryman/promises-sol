@@ -94,7 +94,7 @@ pub struct MakeSelfPromise<'info> {
     #[account(
         init, 
         payer = signer, 
-        space = 8 + 8 + 1, 
+        space = 8 + 8 + 8 + 8 + 1, 
         seeds = [b"selfpromise", signer.key().as_ref(), text.as_ref(), &deadline_secs.to_le_bytes().to_vec(), &size.to_le_bytes().to_vec()],
         bump
     )]
