@@ -57,7 +57,7 @@ describe("promisesprimitive", async () => {
       makeTx, 
       [newAccountKp]
     )
-    console.log(makeTxConfirmation)
+    assert(makeTxConfirmation, "making promise failed")
 
   });
 
@@ -106,7 +106,7 @@ describe("promisesprimitive", async () => {
       makeTx, 
       [newAccountKp]
     )
-    console.log(`Created promise on tx - ${makeTxConfirmation}`)
+    assert(makeTxConfirmation, "making promise failed")
 
     const fulfillTx = await program
       .methods
@@ -121,7 +121,7 @@ describe("promisesprimitive", async () => {
         fulfillTx, 
         [newAccountKp]
       )
-      console.log(`Fulfilled promise on tx - ${fulfillTxConfirmation}`)
+      assert(fulfillTxConfirmation, "fulfilling promise failed")
 
   });
 
