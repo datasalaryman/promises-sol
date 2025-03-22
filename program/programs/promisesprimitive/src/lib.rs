@@ -48,24 +48,13 @@ pub mod promisesprimitive {
     }
 
     pub fn break_self_promise(
-        ctx: Context<BreakSelfPromise>, 
-        creator: Pubkey, 
+        ctx: Context<BreakSelfPromise>,
         text: Vec<u8>,
         deadline_secs: u64, 
         size: u64, 
     ) -> Result<()> {
-        // let release_promise = anchor_lang::solana_program::system_instruction::transfer(
-        //     &ctx.accounts.promise_account.key(),
-        //     &ctx.accounts.signer.key(),
-        //     size,
-        // );
-        // let _ = anchor_lang::solana_program::program::invoke(
-        //     &release_promise,
-        //     &[
-        //         ctx.accounts.promise_account.to_account_info(),
-        //         ctx.accounts.signer.to_account_info(),
-        //     ],
-        // );
+        **ctx.accounts.promise_account.to_account_info().try_borrow_mut_lamports()? -= size;
+        **ctx.accounts.signer.to_account_info().try_borrow_mut_lamports()? += size;
         msg!("Breaking a promise with {:?}", ctx.program_id);
         Ok(())
     }
@@ -104,7 +93,7 @@ pub struct FulFillSelfPromise<'info> {
     #[account(
         mut, 
         seeds = [b"selfpromise", signer.key().as_ref(), text.as_ref(), &deadline_secs.to_le_bytes().to_vec(), &size.to_le_bytes().to_vec()],
-        bump = promise_account.bump, 
+        bump = promise_account.bump,
         close = signer
     )]
     promise_account: Account<'info, SelfPromise>,
@@ -113,7 +102,6 @@ pub struct FulFillSelfPromise<'info> {
 
 #[derive(Accounts)]
 #[instruction(
-    creator: Pubkey, 
     text: Vec<u8>,
     deadline_secs: u64, 
     size: u64, 
@@ -121,11 +109,16 @@ pub struct FulFillSelfPromise<'info> {
 pub struct BreakSelfPromise<'info> {
     #[account(address = AUTHOR)]
     pub signer: Signer<'info>,
+    #[account(mut)]
+    pub creator: SystemAccount<'info>, 
     #[account(
+        mut, 
         seeds = [b"selfpromise", creator.key().as_ref(), text.as_ref(), &deadline_secs.to_le_bytes().to_vec(), &size.to_le_bytes().to_vec()],
         bump = promise_account.bump,
+        close = creator
     )]
     pub promise_account: Account<'info, SelfPromise>,
+    system_program: Program<'info, System>
 }
 
 #[account]
