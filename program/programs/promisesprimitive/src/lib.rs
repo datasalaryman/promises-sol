@@ -12,13 +12,16 @@ pub mod promisesprimitive {
 
     pub fn make_self_promise(
         ctx: Context<MakeSelfPromise>, 
-        text: Vec<u8>,
+        text: [u8; 8],
         deadline_secs: u64, 
         size: u64, 
     ) -> Result<()> {
         ctx.accounts.promise_account.bump = ctx.bumps.promise_account;
         ctx.accounts.promise_account.size = size; 
         ctx.accounts.promise_account.unix_seconds = deadline_secs; 
+        ctx.accounts.promise_account.text = text;
+        
+        let now_ts = Clock::get().unwrap().unix_timestamp;
         let hold_promise: Instruction = anchor_lang::solana_program::system_instruction::transfer(
             &ctx.accounts.signer.key(),
             &ctx.accounts.promise_account.key(),
@@ -37,7 +40,7 @@ pub mod promisesprimitive {
 
     pub fn fulfill_self_promise(
         ctx: Context<FulFillSelfPromise>, 
-        text: Vec<u8>,
+        text: [u8; 8],
         deadline_secs: u64, 
         size: u64, 
     ) -> Result<()> {
@@ -49,7 +52,7 @@ pub mod promisesprimitive {
 
     pub fn break_self_promise(
         ctx: Context<BreakSelfPromise>,
-        text: Vec<u8>,
+        text: [u8; 8],
         deadline_secs: u64, 
         size: u64, 
     ) -> Result<()> {
@@ -63,7 +66,7 @@ pub mod promisesprimitive {
 
 #[derive(Accounts)]
 #[instruction(
-    text: Vec<u8>,
+    text: [u8; 8],
     deadline_secs: u64, 
     size: u64, 
 )]
@@ -83,7 +86,7 @@ pub struct MakeSelfPromise<'info> {
 
 #[derive(Accounts)]
 #[instruction(
-    text: Vec<u8>,
+    text: [u8; 8],
     deadline_secs: u64, 
     size: u64, 
 )]
@@ -102,7 +105,7 @@ pub struct FulFillSelfPromise<'info> {
 
 #[derive(Accounts)]
 #[instruction(
-    text: Vec<u8>,
+    text: [u8; 8],
     deadline_secs: u64, 
     size: u64, 
 )]
@@ -123,7 +126,7 @@ pub struct BreakSelfPromise<'info> {
 
 #[account]
 pub struct SelfPromise {
-    data: u64,
+    text: [u8; 8],
     unix_seconds: u64, 
     size: u64, 
     bump: u8

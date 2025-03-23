@@ -51,13 +51,13 @@ describe("promisesprimitive", async () => {
       signature: signerAirdop,
     });
 
-    const text = [126, 234, 132, 45] as Array<number>
+    const text = [126, 210, 132, 45, 145, 123, 53, 23] as Array<number>
     const deadlineSecs = new BN(1742351473)
     const size = new BN(50000000)
 
     const makeTx = await program
       .methods
-      .makeSelfPromise(Buffer.from(text), deadlineSecs, size)
+      .makeSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
@@ -100,13 +100,13 @@ describe("promisesprimitive", async () => {
       signature: signerAirdop,
     });
 
-    const text = [126, 234, 542, 45] as Array<number>
+    const text = [126, 81, 132, 53, 23, 111, 23, 23] as Array<number>
     const deadlineSecs = new BN(1742351473)
     const size = new BN(50000000)
 
     const makeTx = await program
       .methods
-      .makeSelfPromise(Buffer.from(text), deadlineSecs, size)
+      .makeSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
@@ -121,7 +121,7 @@ describe("promisesprimitive", async () => {
 
     const fulfillTx = await program
       .methods
-      .fulfillSelfPromise(Buffer.from(text), deadlineSecs, size)
+      .fulfillSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
@@ -163,13 +163,13 @@ describe("promisesprimitive", async () => {
       signature: signerAirdop,
     });
 
-    const text = [126, 234, 456, 45] as Array<number>
+    const text = [126, 41, 132, 45, 90, 41, 0, 23] as Array<number>
     const deadlineSecs = new BN(1742351473)
     const size = new BN(50000000)
 
     const makeTx = await program
       .methods
-      .makeSelfPromise(Buffer.from(text), deadlineSecs, size)
+      .makeSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
@@ -184,7 +184,7 @@ describe("promisesprimitive", async () => {
 
     const breakTx = await program
       .methods
-      .breakSelfPromise(Buffer.from(text), deadlineSecs, size)
+      .breakSelfPromise(text, deadlineSecs, size)
       .accounts({
         creator: newAccountKp.publicKey
       })
@@ -226,13 +226,13 @@ describe("promisesprimitive", async () => {
       signature: otherAirdop,
     });
 
-    const text = [342, 234, 542, 45] as Array<number>
+    const text = [0, 157, 132, 45, 212, 30, 42, 23] as Array<number>
     const deadlineSecs = new BN(1742351473)
     const size = new BN(50000000)
 
     const makeTx = await program
       .methods
-      .makeSelfPromise(Buffer.from(text), deadlineSecs, size)
+      .makeSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
@@ -248,7 +248,7 @@ describe("promisesprimitive", async () => {
 
     const nonCreatorFulfillTx = await program
       .methods
-      .fulfillSelfPromise(Buffer.from(text), deadlineSecs, size)
+      .fulfillSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: otherAccountKp.publicKey,
       })
@@ -269,7 +269,7 @@ describe("promisesprimitive", async () => {
 
     const authorFulfillTx = await program
       .methods
-      .fulfillSelfPromise(Buffer.from(text), deadlineSecs, size)
+      .fulfillSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: (await authorKp()).publicKey,
       })
