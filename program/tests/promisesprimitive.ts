@@ -1,14 +1,18 @@
 import * as anchor from "@coral-xyz/anchor";
 import { BN, Program } from "@coral-xyz/anchor";
 import { Promisesprimitive } from "../target/types/promisesprimitive";
-import { assert } from "console";
+// import { assert } from "console";
 import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, SystemProgram } from "@solana/web3.js";
 import 'dotenv/config';
 import { initializeKeypair } from "@solana-developers/helpers"
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+chai.use(chaiAsPromised);
 
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
   const newAccountKp = new Keypair();
+  const otherAccountKp = new Keypair();
   
   const program = anchor.workspace.Promisesprimitive as Program<Promisesprimitive>;
 
@@ -64,7 +68,7 @@ describe("promisesprimitive", async () => {
       makeTx, 
       [newAccountKp]
     )
-    assert(makeTxConfirmation, "making promise failed")
+    chai.assert(makeTxConfirmation, "making promise failed")
 
   });
 
@@ -113,7 +117,7 @@ describe("promisesprimitive", async () => {
       makeTx, 
       [newAccountKp]
     )
-    assert(makeTxConfirmation, "making promise failed")
+    chai.assert(makeTxConfirmation, "making promise failed")
 
     const fulfillTx = await program
       .methods
@@ -128,7 +132,7 @@ describe("promisesprimitive", async () => {
         fulfillTx, 
         [newAccountKp]
       )
-      assert(fulfillTxConfirmation, "fulfilling promise failed")
+      chai.assert(fulfillTxConfirmation, "fulfilling promise failed")
 
   });
 
@@ -176,7 +180,7 @@ describe("promisesprimitive", async () => {
       makeTx, 
       [newAccountKp]
     )
-    assert(makeTxConfirmation, "making promise failed")
+    chai.assert(makeTxConfirmation, "making promise failed")
 
     const breakTx = await program
       .methods
@@ -191,8 +195,104 @@ describe("promisesprimitive", async () => {
         breakTx, 
         [(await authorKp())]
       )
-      assert(breakTxConfirmation, "fulfilling promise failed")
+      chai.assert(breakTxConfirmation, "fulfilling promise failed")
 
   });
+
+  it ("program error when non-creator or author try to fulfill promise", async () => {
+    const signerAirdop = await provider.connection.requestAirdrop(
+      newAccountKp.publicKey,
+      LAMPORTS_PER_SOL * 0.6
+    );
+
+    const signerBlockHash = await provider.connection.getLatestBlockhash();
+
+    await provider.connection.confirmTransaction({
+      blockhash: signerBlockHash.blockhash,
+      lastValidBlockHeight: signerBlockHash.lastValidBlockHeight,
+      signature: signerAirdop,
+    });
+
+    const otherAirdop = await provider.connection.requestAirdrop(
+      otherAccountKp.publicKey,
+      LAMPORTS_PER_SOL * 0.6
+    );
+
+    const otherBlockHash = await provider.connection.getLatestBlockhash();
+
+    await provider.connection.confirmTransaction({
+      blockhash: otherBlockHash.blockhash,
+      lastValidBlockHeight: otherBlockHash.lastValidBlockHeight,
+      signature: otherAirdop,
+    });
+
+    const text = [342, 234, 542, 45] as Array<number>
+    const deadlineSecs = new BN(1742351473)
+    const size = new BN(50000000)
+
+    const makeTx = await program
+      .methods
+      .makeSelfPromise(Buffer.from(text), deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+      })
+      .signers([newAccountKp])?.transaction() ?? undefined;
+
+    const makeTxConfirmation = await sendAndConfirmTransaction(
+      provider.connection, 
+      makeTx, 
+      [newAccountKp]
+    )
+    chai.assert(makeTxConfirmation, "making promise failed")
+
+
+    const nonCreatorFulfillTx = await program
+      .methods
+      .fulfillSelfPromise(Buffer.from(text), deadlineSecs, size)
+      .accounts({
+        signer: otherAccountKp.publicKey,
+      })
+      .signers([otherAccountKp])?.transaction() ?? undefined;
+
+    const nonCreatorFulfillTxConfirmation = async() => {
+      return sendAndConfirmTransaction(
+      provider.connection, 
+      nonCreatorFulfillTx, 
+      [otherAccountKp]
+      )
+    }
+
+    // await nonCreatorFulfillTxConfirmation()
+    chai.expect(nonCreatorFulfillTxConfirmation()).to.eventually
+      .be.rejectedWith("Simulation failed.")
+      .and.be.an.instanceOf(Error)
+
+    const authorFulfillTx = await program
+      .methods
+      .fulfillSelfPromise(Buffer.from(text), deadlineSecs, size)
+      .accounts({
+        signer: (await authorKp()).publicKey,
+      })
+      .signers([(await authorKp())])?.transaction() ?? undefined;
+
+    const authorFulfillTxConfirmation = async() => {
+      return sendAndConfirmTransaction(
+      provider.connection, 
+      authorFulfillTx, 
+      [(await authorKp())]
+      )
+    }
+
+    // await authorFulfillTxConfirmation()
+    chai.expect(authorFulfillTxConfirmation()).to.eventually
+      .be.rejectedWith("Simulation failed.")
+      .and.be.an.instanceOf(Error)
+
+
+  })
+
+  // it ("program error when non-creator or creator try to break promise", () => {})
+  // it ("program error when creator tries to fulfill promise after unix secs", () => {})
+  // it ("program error when author tries to break promise after unix secs", () => {})
 
 });
