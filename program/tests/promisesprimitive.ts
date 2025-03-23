@@ -9,18 +9,18 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
 
-  // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.AnchorProvider.env());
-  const newAccountKp = new Keypair();
-  const otherAccountKp = new Keypair();
-  
-  const program = anchor.workspace.Promisesprimitive as Program<Promisesprimitive>;
+// Configure the client to use the local cluster.
+anchor.setProvider(anchor.AnchorProvider.env());
+const newAccountKp = new Keypair();
+const otherAccountKp = new Keypair();
 
-  const provider = anchor.getProvider()
+const program = anchor.workspace.Promisesprimitive as Program<Promisesprimitive>;
 
-  const authorKp = (async() => await initializeKeypair(provider.connection, {
-    envVariableName: "AUTHOR_KEYPAIR",
-  }));
+const provider = anchor.getProvider()
+
+const authorKp = (async () => await initializeKeypair(provider.connection, {
+  envVariableName: "AUTHOR_KEYPAIR",
+}));
 
 describe("promisesprimitive", async () => {
 
@@ -64,8 +64,8 @@ describe("promisesprimitive", async () => {
       .signers([newAccountKp])?.transaction() ?? undefined;
 
     const makeTxConfirmation = await sendAndConfirmTransaction(
-      provider.connection, 
-      makeTx, 
+      provider.connection,
+      makeTx,
       [newAccountKp]
     )
     chai.assert(makeTxConfirmation, "making promise failed")
@@ -113,8 +113,8 @@ describe("promisesprimitive", async () => {
       .signers([newAccountKp])?.transaction() ?? undefined;
 
     const makeTxConfirmation = await sendAndConfirmTransaction(
-      provider.connection, 
-      makeTx, 
+      provider.connection,
+      makeTx,
       [newAccountKp]
     )
     chai.assert(makeTxConfirmation, "making promise failed")
@@ -127,12 +127,12 @@ describe("promisesprimitive", async () => {
       })
       .signers([newAccountKp])?.transaction() ?? undefined;
 
-      const fulfillTxConfirmation = await sendAndConfirmTransaction(
-        provider.connection, 
-        fulfillTx, 
-        [newAccountKp]
-      )
-      chai.assert(fulfillTxConfirmation, "fulfilling promise failed")
+    const fulfillTxConfirmation = await sendAndConfirmTransaction(
+      provider.connection,
+      fulfillTx,
+      [newAccountKp]
+    )
+    chai.assert(fulfillTxConfirmation, "fulfilling promise failed")
 
   });
 
@@ -176,8 +176,8 @@ describe("promisesprimitive", async () => {
       .signers([newAccountKp])?.transaction() ?? undefined;
 
     const makeTxConfirmation = await sendAndConfirmTransaction(
-      provider.connection, 
-      makeTx, 
+      provider.connection,
+      makeTx,
       [newAccountKp]
     )
     chai.assert(makeTxConfirmation, "making promise failed")
@@ -190,16 +190,16 @@ describe("promisesprimitive", async () => {
       })
       .signers([(await authorKp())])?.transaction() ?? undefined;
 
-      const breakTxConfirmation = await sendAndConfirmTransaction(
-        provider.connection, 
-        breakTx, 
-        [(await authorKp())]
-      )
-      chai.assert(breakTxConfirmation, "fulfilling promise failed")
+    const breakTxConfirmation = await sendAndConfirmTransaction(
+      provider.connection,
+      breakTx,
+      [(await authorKp())]
+    )
+    chai.assert(breakTxConfirmation, "fulfilling promise failed")
 
   });
 
-  it ("program error when non-creator or author try to fulfill promise", async () => {
+  it("program error when non-creator or author try to fulfill promise", async () => {
     const signerAirdop = await provider.connection.requestAirdrop(
       newAccountKp.publicKey,
       LAMPORTS_PER_SOL * 0.6
@@ -239,8 +239,8 @@ describe("promisesprimitive", async () => {
       .signers([newAccountKp])?.transaction() ?? undefined;
 
     const makeTxConfirmation = await sendAndConfirmTransaction(
-      provider.connection, 
-      makeTx, 
+      provider.connection,
+      makeTx,
       [newAccountKp]
     )
     chai.assert(makeTxConfirmation, "making promise failed")
@@ -254,11 +254,11 @@ describe("promisesprimitive", async () => {
       })
       .signers([otherAccountKp])?.transaction() ?? undefined;
 
-    const nonCreatorFulfillTxConfirmation = async() => {
+    const nonCreatorFulfillTxConfirmation = async () => {
       return sendAndConfirmTransaction(
-      provider.connection, 
-      nonCreatorFulfillTx, 
-      [otherAccountKp]
+        provider.connection,
+        nonCreatorFulfillTx,
+        [otherAccountKp]
       )
     }
 
@@ -275,11 +275,11 @@ describe("promisesprimitive", async () => {
       })
       .signers([(await authorKp())])?.transaction() ?? undefined;
 
-    const authorFulfillTxConfirmation = async() => {
+    const authorFulfillTxConfirmation = async () => {
       return sendAndConfirmTransaction(
-      provider.connection, 
-      authorFulfillTx, 
-      [(await authorKp())]
+        provider.connection,
+        authorFulfillTx,
+        [(await authorKp())]
       )
     }
 
