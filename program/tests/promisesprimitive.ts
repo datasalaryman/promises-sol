@@ -391,7 +391,116 @@ describe("promisesprimitive", async () => {
       .be.rejectedWith("Simulation failed.")
       .and.be.an.instanceOf(Error)
   })
-  // it ("program error when creator tries to fulfill promise after unix secs", () => {})
-  // it ("program error when author tries to break promise after unix secs", () => {})
+
+  it ("program error when creator tries to fulfill promise after unix secs", async () => {
+    const signerAirdop = await provider.connection.requestAirdrop(
+      newAccountKp.publicKey,
+      LAMPORTS_PER_SOL * 0.6
+    );
+
+    const signerBlockHash = await provider.connection.getLatestBlockhash();
+
+    await provider.connection.confirmTransaction({
+      blockhash: signerBlockHash.blockhash,
+      lastValidBlockHeight: signerBlockHash.lastValidBlockHeight,
+      signature: signerAirdop,
+    });
+
+    const text = [0, 32, 132, 45, 212, 30, 42, 23] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 3)
+    const size = new BN(50000000)
+
+    const makeTx = await program
+      .methods
+      .makeSelfPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+      })
+      .signers([newAccountKp])?.transaction() ?? undefined;
+
+    const makeTxConfirmation = await sendAndConfirmTransaction(
+      provider.connection,
+      makeTx,
+      [newAccountKp]
+    )
+    chai.assert(makeTxConfirmation, "making promise failed")
+
+    const creatorFulfillTx = await program
+      .methods
+      .fulfillSelfPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+      })
+      .signers([newAccountKp])?.transaction() ?? undefined;
+
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    const creatorFulfillTxConfirmation = async () => {
+      return sendAndConfirmTransaction(
+        provider.connection,
+        creatorFulfillTx,
+        [newAccountKp]
+      )
+    }
+
+    // await authorFulfillTxConfirmation()
+    chai.expect(creatorFulfillTxConfirmation()).to.eventually
+      .be.rejectedWith("Simulation failed.")
+      .and.be.an.instanceOf(Error)
+  })
+
+  it ("program error when author tries to break promise before unix secs", async() => {
+    const signerAirdop = await provider.connection.requestAirdrop(
+      newAccountKp.publicKey,
+      LAMPORTS_PER_SOL * 0.6
+    );
+
+    const signerBlockHash = await provider.connection.getLatestBlockhash();
+
+    await provider.connection.confirmTransaction({
+      blockhash: signerBlockHash.blockhash,
+      lastValidBlockHeight: signerBlockHash.lastValidBlockHeight,
+      signature: signerAirdop,
+    });
+
+    const text = [0, 32, 132, 45, 212, 71, 42, 23] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10) // Longer deadline
+    const size = new BN(50000000)
+
+    const makeTx = await program
+      .methods
+      .makeSelfPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+      })
+      .signers([newAccountKp])?.transaction() ?? undefined;
+
+    const makeTxConfirmation = await sendAndConfirmTransaction(
+      provider.connection,
+      makeTx,
+      [newAccountKp]
+    )
+    chai.assert(makeTxConfirmation, "making promise failed")
+
+    const authorBreakTx = await program
+      .methods
+      .breakSelfPromise(text, deadlineSecs, size)
+      .accounts({
+        creator: newAccountKp.publicKey
+      })
+      .signers([authorKp])?.transaction() ?? undefined;
+
+    const authorBreakTxConfirmation = async () => {
+      return sendAndConfirmTransaction(
+        provider.connection,
+        authorBreakTx,
+        [authorKp]
+      )
+    }
+
+    chai.expect(authorBreakTxConfirmation()).to.eventually
+      .be.rejectedWith("Simulation failed.")
+      .and.be.an.instanceOf(Error)
+  })
 
 });
