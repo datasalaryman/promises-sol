@@ -11,17 +11,18 @@ pub mod promisesprimitive {
     use super::*;
 
     pub fn make_self_promise(
-        ctx: Context<MakeSelfPromise>, 
+        ctx: Context<MakeSelfPromise>,
         text: [u8; 8],
-        deadline_secs: u64, 
-        size: u64, 
+        deadline_secs: u64,
+        size: u64,
     ) -> Result<()> {
         ctx.accounts.promise_account.bump = ctx.bumps.promise_account;
-        ctx.accounts.promise_account.size = size; 
-        ctx.accounts.promise_account.unix_seconds = deadline_secs; 
+        ctx.accounts.promise_account.size = size;
+        require_gte!(deadline_secs, Clock::get().unwrap().unix_timestamp as u64);
+        ctx.accounts.promise_account.unix_seconds = deadline_secs;
         ctx.accounts.promise_account.text = text;
-        
-        let now_ts = Clock::get().unwrap().unix_timestamp;
+
+
         let hold_promise: Instruction = anchor_lang::solana_program::system_instruction::transfer(
             &ctx.accounts.signer.key(),
             &ctx.accounts.promise_account.key(),
@@ -39,10 +40,10 @@ pub mod promisesprimitive {
     }
 
     pub fn fulfill_self_promise(
-        ctx: Context<FulFillSelfPromise>, 
+        ctx: Context<FulFillSelfPromise>,
         text: [u8; 8],
-        deadline_secs: u64, 
-        size: u64, 
+        deadline_secs: u64,
+        size: u64,
     ) -> Result<()> {
         **ctx.accounts.promise_account.to_account_info().try_borrow_mut_lamports()? -= size;
         **ctx.accounts.signer.to_account_info().try_borrow_mut_lamports()? += size;
@@ -53,8 +54,8 @@ pub mod promisesprimitive {
     pub fn break_self_promise(
         ctx: Context<BreakSelfPromise>,
         text: [u8; 8],
-        deadline_secs: u64, 
-        size: u64, 
+        deadline_secs: u64,
+        size: u64,
     ) -> Result<()> {
         **ctx.accounts.promise_account.to_account_info().try_borrow_mut_lamports()? -= size;
         **ctx.accounts.signer.to_account_info().try_borrow_mut_lamports()? += size;
@@ -67,16 +68,16 @@ pub mod promisesprimitive {
 #[derive(Accounts)]
 #[instruction(
     text: [u8; 8],
-    deadline_secs: u64, 
-    size: u64, 
+    deadline_secs: u64,
+    size: u64,
 )]
 pub struct MakeSelfPromise<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
     #[account(
-        init, 
-        payer = signer, 
-        space = 8 + 8 + 8 + 8 + 1, 
+        init,
+        payer = signer,
+        space = 8 + 8 + 8 + 8 + 1,
         seeds = [b"selfpromise", signer.key().as_ref(), text.as_ref(), &deadline_secs.to_le_bytes().to_vec(), &size.to_le_bytes().to_vec()],
         bump
     )]
@@ -87,14 +88,14 @@ pub struct MakeSelfPromise<'info> {
 #[derive(Accounts)]
 #[instruction(
     text: [u8; 8],
-    deadline_secs: u64, 
-    size: u64, 
+    deadline_secs: u64,
+    size: u64,
 )]
 pub struct FulFillSelfPromise<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
     #[account(
-        mut, 
+        mut,
         seeds = [b"selfpromise", signer.key().as_ref(), text.as_ref(), &deadline_secs.to_le_bytes().to_vec(), &size.to_le_bytes().to_vec()],
         bump = promise_account.bump,
         close = signer
@@ -106,16 +107,16 @@ pub struct FulFillSelfPromise<'info> {
 #[derive(Accounts)]
 #[instruction(
     text: [u8; 8],
-    deadline_secs: u64, 
-    size: u64, 
+    deadline_secs: u64,
+    size: u64,
 )]
 pub struct BreakSelfPromise<'info> {
     #[account(address = AUTHOR)]
     pub signer: Signer<'info>,
     #[account(mut)]
-    pub creator: SystemAccount<'info>, 
+    pub creator: SystemAccount<'info>,
     #[account(
-        mut, 
+        mut,
         seeds = [b"selfpromise", creator.key().as_ref(), text.as_ref(), &deadline_secs.to_le_bytes().to_vec(), &size.to_le_bytes().to_vec()],
         bump = promise_account.bump,
         close = creator
@@ -127,7 +128,7 @@ pub struct BreakSelfPromise<'info> {
 #[account]
 pub struct SelfPromise {
     text: [u8; 8],
-    unix_seconds: u64, 
-    size: u64, 
+    unix_seconds: u64,
+    size: u64,
     bump: u8
 }

@@ -18,9 +18,13 @@ const program = anchor.workspace.Promisesprimitive as Program<Promisesprimitive>
 
 const provider = anchor.getProvider()
 
-const authorKp = (async () => await initializeKeypair(provider.connection, {
-  envVariableName: "AUTHOR_KEYPAIR",
-}));
+let authorKp: Keypair;
+
+before(async () => {
+  authorKp = await initializeKeypair(provider.connection, {
+    envVariableName: "AUTHOR_KEYPAIR",
+  });
+});
 
 describe("promisesprimitive", async () => {
 
@@ -52,7 +56,7 @@ describe("promisesprimitive", async () => {
     });
 
     const text = [126, 210, 132, 45, 145, 123, 53, 23] as Array<number>
-    const deadlineSecs = new BN(1742351473)
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
     const size = new BN(50000000)
 
     const makeTx = await program
@@ -101,7 +105,7 @@ describe("promisesprimitive", async () => {
     });
 
     const text = [126, 81, 132, 53, 23, 111, 23, 23] as Array<number>
-    const deadlineSecs = new BN(1742351473)
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
     const size = new BN(50000000)
 
     const makeTx = await program
@@ -164,7 +168,7 @@ describe("promisesprimitive", async () => {
     });
 
     const text = [126, 41, 132, 45, 90, 41, 0, 23] as Array<number>
-    const deadlineSecs = new BN(1742351473)
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
     const size = new BN(50000000)
 
     const makeTx = await program
@@ -188,12 +192,12 @@ describe("promisesprimitive", async () => {
       .accounts({
         creator: newAccountKp.publicKey
       })
-      .signers([(await authorKp())])?.transaction() ?? undefined;
+      .signers([authorKp])?.transaction() ?? undefined;
 
     const breakTxConfirmation = await sendAndConfirmTransaction(
       provider.connection,
       breakTx,
-      [(await authorKp())]
+      [authorKp]
     )
     chai.assert(breakTxConfirmation, "fulfilling promise failed")
 
@@ -227,7 +231,7 @@ describe("promisesprimitive", async () => {
     });
 
     const text = [0, 157, 132, 45, 212, 30, 42, 23] as Array<number>
-    const deadlineSecs = new BN(1742351473)
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
     const size = new BN(50000000)
 
     const makeTx = await program
@@ -271,15 +275,15 @@ describe("promisesprimitive", async () => {
       .methods
       .fulfillSelfPromise(text, deadlineSecs, size)
       .accounts({
-        signer: (await authorKp()).publicKey,
+        signer: authorKp.publicKey,
       })
-      .signers([(await authorKp())])?.transaction() ?? undefined;
+      .signers([authorKp])?.transaction() ?? undefined;
 
     const authorFulfillTxConfirmation = async () => {
       return sendAndConfirmTransaction(
         provider.connection,
         authorFulfillTx,
-        [(await authorKp())]
+        [authorKp]
       )
     }
 
@@ -319,7 +323,7 @@ describe("promisesprimitive", async () => {
     });
 
     const text = [42, 187, 99, 155, 201, 77, 13, 250] as Array<number>
-    const deadlineSecs = new BN(1742351473)
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
     const size = new BN(50000000)
 
     const makeTx = await program
