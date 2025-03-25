@@ -1,269 +1,231 @@
 import * as anchor from "@coral-xyz/anchor";
 import { BN, Program } from "@coral-xyz/anchor";
 import { Promisesprimitive } from "../target/types/promisesprimitive";
-// import { assert } from "console";
-import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, SystemProgram } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import 'dotenv/config';
-import { initializeKeypair } from "@solana-developers/helpers"
+import { initializeKeypair, sendVersionedTransaction } from "@solana-developers/helpers"
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
 
 // Configure the client to use the local cluster.
 anchor.setProvider(anchor.AnchorProvider.env());
-const newAccountKp = new Keypair();
-const otherAccountKp = new Keypair();
 
 const program = anchor.workspace.Promisesprimitive as Program<Promisesprimitive>;
 
 const provider = anchor.getProvider()
 
 let authorKp: Keypair;
+const newAccountKp = new Keypair();
+const otherAccountKp = new Keypair();
 
 before(async () => {
   authorKp = await initializeKeypair(provider.connection, {
     envVariableName: "AUTHOR_KEYPAIR",
   });
+
+  const signerAirdop = await provider.connection.requestAirdrop(
+    newAccountKp.publicKey,
+    LAMPORTS_PER_SOL * 1.0
+  );
+
+  const signerBlockHash = await provider.connection.getLatestBlockhash();
+
+  await provider.connection.confirmTransaction({
+    blockhash: signerBlockHash.blockhash,
+    lastValidBlockHeight: signerBlockHash.lastValidBlockHeight,
+    signature: signerAirdop,
+  });
+
+  const otherAccountAirdop = await provider.connection.requestAirdrop(
+    newAccountKp.publicKey,
+    LAMPORTS_PER_SOL * 1.0
+  );
+
+  const otherAccountBlockHash = await provider.connection.getLatestBlockhash();
+
+  await provider.connection.confirmTransaction({
+    blockhash: otherAccountBlockHash.blockhash,
+    lastValidBlockHeight: otherAccountBlockHash.lastValidBlockHeight,
+    signature: otherAccountAirdop,
+  });
+
 });
 
 describe("promisesprimitive", async () => {
 
   it("able to make promise", async () => {
-    const programAirdrop = await provider.connection.requestAirdrop(
-      new PublicKey(program.idl.address),
-      LAMPORTS_PER_SOL * 0.1
-    );
-
-    const programBlockHash = await provider.connection.getLatestBlockhash();
-
-    await provider.connection.confirmTransaction({
-      blockhash: programBlockHash.blockhash,
-      lastValidBlockHeight: programBlockHash.lastValidBlockHeight,
-      signature: programAirdrop,
-    });
-
-    const signerAirdop = await provider.connection.requestAirdrop(
-      newAccountKp.publicKey,
-      LAMPORTS_PER_SOL * 0.1
-    );
-
-    const signerBlockHash = await provider.connection.getLatestBlockhash();
-
-    await provider.connection.confirmTransaction({
-      blockhash: signerBlockHash.blockhash,
-      lastValidBlockHeight: signerBlockHash.lastValidBlockHeight,
-      signature: signerAirdop,
-    });
 
     const text = [126, 210, 132, 45, 145, 123, 53, 23] as Array<number>
     const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
     const size = new BN(50000000)
 
-    const makeTx = await program
+    const makeIx = await program
       .methods
       .makeSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
-      .signers([newAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
-    const makeTxConfirmation = await sendAndConfirmTransaction(
+    const makeTxConfirmation = await sendVersionedTransaction(
       provider.connection,
-      makeTx,
-      [newAccountKp]
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
     )
+
     chai.assert(makeTxConfirmation, "making promise failed")
 
   });
 
 
   it("able to fulfill promise", async () => {
-    // const programAirdrop = await provider.connection.requestAirdrop(
-    //   new PublicKey(program.idl.address),
-    //   LAMPORTS_PER_SOL * 0.1
-    // );
-
-    // const programBlockHash = await provider.connection.getLatestBlockhash();
-
-    // await provider.connection.confirmTransaction({
-    //   blockhash: programBlockHash.blockhash,
-    //   lastValidBlockHeight: programBlockHash.lastValidBlockHeight,
-    //   signature: programAirdrop,
-    // });
-
-    const signerAirdop = await provider.connection.requestAirdrop(
-      newAccountKp.publicKey,
-      LAMPORTS_PER_SOL * 0.6
-    );
-
-    const signerBlockHash = await provider.connection.getLatestBlockhash();
-
-    await provider.connection.confirmTransaction({
-      blockhash: signerBlockHash.blockhash,
-      lastValidBlockHeight: signerBlockHash.lastValidBlockHeight,
-      signature: signerAirdop,
-    });
 
     const text = [126, 81, 132, 53, 23, 111, 23, 23] as Array<number>
     const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
     const size = new BN(50000000)
 
-    const makeTx = await program
+    const makeIx = await program
       .methods
       .makeSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
-      .signers([newAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
-    const makeTxConfirmation = await sendAndConfirmTransaction(
+    const makeTxConfirmation = await sendVersionedTransaction(
       provider.connection,
-      makeTx,
-      [newAccountKp]
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
     )
     chai.assert(makeTxConfirmation, "making promise failed")
 
-    const fulfillTx = await program
+    const fulfillIx = await program
       .methods
       .fulfillSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
-      .signers([newAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
-    const fulfillTxConfirmation = await sendAndConfirmTransaction(
+    const fulfillTxConfirmation = await sendVersionedTransaction(
       provider.connection,
-      fulfillTx,
-      [newAccountKp]
+      [fulfillIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
     )
     chai.assert(fulfillTxConfirmation, "fulfilling promise failed")
 
   });
 
   it("able to break promise", async () => {
-    // const programAirdrop = await provider.connection.requestAirdrop(
-    //   new PublicKey(program.idl.address),
-    //   LAMPORTS_PER_SOL * 0.1
-    // );
-
-    // const programBlockHash = await provider.connection.getLatestBlockhash();
-
-    // await provider.connection.confirmTransaction({
-    //   blockhash: programBlockHash.blockhash,
-    //   lastValidBlockHeight: programBlockHash.lastValidBlockHeight,
-    //   signature: programAirdrop,
-    // });
-
-    const signerAirdop = await provider.connection.requestAirdrop(
-      newAccountKp.publicKey,
-      LAMPORTS_PER_SOL * 0.6
-    );
-
-    const signerBlockHash = await provider.connection.getLatestBlockhash();
-
-    await provider.connection.confirmTransaction({
-      blockhash: signerBlockHash.blockhash,
-      lastValidBlockHeight: signerBlockHash.lastValidBlockHeight,
-      signature: signerAirdop,
-    });
 
     const text = [126, 41, 132, 45, 90, 41, 0, 23] as Array<number>
     const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 3)
     const size = new BN(50000000)
 
-    const makeTx = await program
+    const makeIx = await program
       .methods
       .makeSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
-      .signers([newAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
-    const makeTxConfirmation = await sendAndConfirmTransaction(
+    const makeTxConfirmation = await sendVersionedTransaction(
       provider.connection,
-      makeTx,
-      [newAccountKp]
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
     )
     chai.assert(makeTxConfirmation, "making promise failed")
 
-    const breakTx = await program
+    const breakIx = await program
       .methods
       .breakSelfPromise(text, deadlineSecs, size)
       .accounts({
         creator: newAccountKp.publicKey
       })
-      .signers([authorKp])?.transaction() ?? undefined;
+      .instruction();
 
     await new Promise(resolve => setTimeout(resolve, 4000));
-    const breakTxConfirmation = await sendAndConfirmTransaction(
+    const breakTxConfirmation = await sendVersionedTransaction(
       provider.connection,
-      breakTx,
-      [authorKp]
+      [breakIx],
+      [authorKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
     )
     chai.assert(breakTxConfirmation, "fulfilling promise failed")
 
   });
 
   it("program error when non-creator or author try to fulfill promise", async () => {
-    const signerAirdop = await provider.connection.requestAirdrop(
-      newAccountKp.publicKey,
-      LAMPORTS_PER_SOL * 0.6
-    );
-
-    const signerBlockHash = await provider.connection.getLatestBlockhash();
-
-    await provider.connection.confirmTransaction({
-      blockhash: signerBlockHash.blockhash,
-      lastValidBlockHeight: signerBlockHash.lastValidBlockHeight,
-      signature: signerAirdop,
-    });
-
-    const otherAirdop = await provider.connection.requestAirdrop(
-      otherAccountKp.publicKey,
-      LAMPORTS_PER_SOL * 0.6
-    );
-
-    const otherBlockHash = await provider.connection.getLatestBlockhash();
-
-    await provider.connection.confirmTransaction({
-      blockhash: otherBlockHash.blockhash,
-      lastValidBlockHeight: otherBlockHash.lastValidBlockHeight,
-      signature: otherAirdop,
-    });
 
     const text = [0, 157, 132, 45, 212, 30, 42, 23] as Array<number>
     const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
     const size = new BN(50000000)
 
-    const makeTx = await program
+    const makeIx = await program
       .methods
       .makeSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
-      .signers([newAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
-    const makeTxConfirmation = await sendAndConfirmTransaction(
+    const makeTxConfirmation = await sendVersionedTransaction(
       provider.connection,
-      makeTx,
-      [newAccountKp]
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
     )
     chai.assert(makeTxConfirmation, "making promise failed")
 
 
-    const nonCreatorFulfillTx = await program
+    const nonCreatorFulfillIx = await program
       .methods
       .fulfillSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: otherAccountKp.publicKey,
       })
-      .signers([otherAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
     const nonCreatorFulfillTxConfirmation = async () => {
-      return sendAndConfirmTransaction(
+      return sendVersionedTransaction(
         provider.connection,
-        nonCreatorFulfillTx,
-        [otherAccountKp]
+        [nonCreatorFulfillIx],
+        [otherAccountKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
       )
     }
 
@@ -272,19 +234,24 @@ describe("promisesprimitive", async () => {
       .be.rejectedWith("Simulation failed.")
       .and.be.an.instanceOf(Error)
 
-    const authorFulfillTx = await program
+    const authorFulfillIx = await program
       .methods
       .fulfillSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: authorKp.publicKey,
       })
-      .signers([authorKp])?.transaction() ?? undefined;
+      .instruction();
 
     const authorFulfillTxConfirmation = async () => {
-      return sendAndConfirmTransaction(
+      return sendVersionedTransaction(
         provider.connection,
-        authorFulfillTx,
-        [authorKp]
+        [authorFulfillIx],
+        [authorKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
       )
     }
 
@@ -297,48 +264,28 @@ describe("promisesprimitive", async () => {
   })
 
   it ("program error when non-creator or creator try to break promise", async () => {
-    const programAirdrop = await provider.connection.requestAirdrop(
-      new PublicKey(program.idl.address),
-      LAMPORTS_PER_SOL * 0.1
-    );
-
-    const programBlockHash = await provider.connection.getLatestBlockhash();
-
-    await provider.connection.confirmTransaction({
-      blockhash: programBlockHash.blockhash,
-      lastValidBlockHeight: programBlockHash.lastValidBlockHeight,
-      signature: programAirdrop,
-    });
-
-    const signerAirdop = await provider.connection.requestAirdrop(
-      newAccountKp.publicKey,
-      LAMPORTS_PER_SOL * 0.1
-    );
-
-    const signerBlockHash = await provider.connection.getLatestBlockhash();
-
-    await provider.connection.confirmTransaction({
-      blockhash: signerBlockHash.blockhash,
-      lastValidBlockHeight: signerBlockHash.lastValidBlockHeight,
-      signature: signerAirdop,
-    });
 
     const text = [42, 187, 99, 155, 201, 77, 13, 250] as Array<number>
     const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 3)
     const size = new BN(50000000)
 
-    const makeTx = await program
+    const makeIx = await program
       .methods
       .makeSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
-      .signers([newAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
-    const makeTxConfirmation = await sendAndConfirmTransaction(
+    const makeTxConfirmation = await sendVersionedTransaction(
       provider.connection,
-      makeTx,
-      [newAccountKp]
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
     );
 
     const makeBlockHash = await provider.connection.getLatestBlockhash();
@@ -349,21 +296,26 @@ describe("promisesprimitive", async () => {
       signature: makeTxConfirmation,
     });
 
-    const nonCreatorBreakTx = await program
+    const nonCreatorBreakIx = await program
       .methods
       .breakSelfPromise(text, deadlineSecs, size)
       .accounts({
         creator: newAccountKp.publicKey
       })
-      .signers([otherAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
     await new Promise(resolve => setTimeout(resolve, 4000));
 
     const nonCreatorBreakTxConfirmation = async () => {
-      return sendAndConfirmTransaction(
+      return sendVersionedTransaction(
         provider.connection,
-        nonCreatorBreakTx,
-        [otherAccountKp]
+        [nonCreatorBreakIx],
+        [otherAccountKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
       )
     }
 
@@ -371,19 +323,24 @@ describe("promisesprimitive", async () => {
       .be.rejectedWith("Simulation failed.")
       .and.be.an.instanceOf(Error)
 
-    const creatorBreakTx = await program
+    const creatorBreakIx = await program
       .methods
       .breakSelfPromise(text, deadlineSecs, size)
       .accounts({
         creator: newAccountKp.publicKey
       })
-      .signers([newAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
     const creatorBreakTxConfirmation = async () => {
-      return sendAndConfirmTransaction(
+      return sendVersionedTransaction(
         provider.connection,
-        creatorBreakTx,
-        [newAccountKp]
+        [creatorBreakIx],
+        [newAccountKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
       )
     }
 
@@ -393,53 +350,51 @@ describe("promisesprimitive", async () => {
   })
 
   it ("program error when creator tries to fulfill promise after unix secs", async () => {
-    const signerAirdop = await provider.connection.requestAirdrop(
-      newAccountKp.publicKey,
-      LAMPORTS_PER_SOL * 0.6
-    );
-
-    const signerBlockHash = await provider.connection.getLatestBlockhash();
-
-    await provider.connection.confirmTransaction({
-      blockhash: signerBlockHash.blockhash,
-      lastValidBlockHeight: signerBlockHash.lastValidBlockHeight,
-      signature: signerAirdop,
-    });
 
     const text = [0, 32, 132, 45, 212, 30, 42, 23] as Array<number>
     const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 3)
     const size = new BN(50000000)
 
-    const makeTx = await program
+    const makeIx = await program
       .methods
       .makeSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
-      .signers([newAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
-    const makeTxConfirmation = await sendAndConfirmTransaction(
+    const makeTxConfirmation = await sendVersionedTransaction(
       provider.connection,
-      makeTx,
-      [newAccountKp]
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
     )
     chai.assert(makeTxConfirmation, "making promise failed")
 
-    const creatorFulfillTx = await program
+    const creatorFulfillIx = await program
       .methods
       .fulfillSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
-      .signers([newAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
     await new Promise(resolve => setTimeout(resolve, 5000));
 
     const creatorFulfillTxConfirmation = async () => {
-      return sendAndConfirmTransaction(
+      return sendVersionedTransaction(
         provider.connection,
-        creatorFulfillTx,
-        [newAccountKp]
+        [creatorFulfillIx],
+        [newAccountKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
       )
     }
 
@@ -450,51 +405,49 @@ describe("promisesprimitive", async () => {
   })
 
   it ("program error when author tries to break promise before unix secs", async() => {
-    const signerAirdop = await provider.connection.requestAirdrop(
-      newAccountKp.publicKey,
-      LAMPORTS_PER_SOL * 0.6
-    );
-
-    const signerBlockHash = await provider.connection.getLatestBlockhash();
-
-    await provider.connection.confirmTransaction({
-      blockhash: signerBlockHash.blockhash,
-      lastValidBlockHeight: signerBlockHash.lastValidBlockHeight,
-      signature: signerAirdop,
-    });
 
     const text = [0, 32, 132, 45, 212, 71, 42, 23] as Array<number>
     const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10) // Longer deadline
     const size = new BN(50000000)
 
-    const makeTx = await program
+    const makeIx = await program
       .methods
       .makeSelfPromise(text, deadlineSecs, size)
       .accounts({
         signer: newAccountKp.publicKey,
       })
-      .signers([newAccountKp])?.transaction() ?? undefined;
+      .instruction();
 
-    const makeTxConfirmation = await sendAndConfirmTransaction(
+    const makeTxConfirmation = await sendVersionedTransaction(
       provider.connection,
-      makeTx,
-      [newAccountKp]
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
     )
     chai.assert(makeTxConfirmation, "making promise failed")
 
-    const authorBreakTx = await program
+    const authorBreakIx = await program
       .methods
       .breakSelfPromise(text, deadlineSecs, size)
       .accounts({
         creator: newAccountKp.publicKey
       })
-      .signers([authorKp])?.transaction() ?? undefined;
+      .instruction();
 
     const authorBreakTxConfirmation = async () => {
-      return sendAndConfirmTransaction(
+      return sendVersionedTransaction(
         provider.connection,
-        authorBreakTx,
-        [authorKp]
+        [authorBreakIx],
+        [authorKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
       )
     }
 
