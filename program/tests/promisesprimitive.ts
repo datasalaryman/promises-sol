@@ -168,7 +168,7 @@ describe("promisesprimitive", async () => {
     });
 
     const text = [126, 41, 132, 45, 90, 41, 0, 23] as Array<number>
-    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 3)
     const size = new BN(50000000)
 
     const makeTx = await program
@@ -194,6 +194,7 @@ describe("promisesprimitive", async () => {
       })
       .signers([authorKp])?.transaction() ?? undefined;
 
+    await new Promise(resolve => setTimeout(resolve, 4000));
     const breakTxConfirmation = await sendAndConfirmTransaction(
       provider.connection,
       breakTx,
@@ -323,7 +324,7 @@ describe("promisesprimitive", async () => {
     });
 
     const text = [42, 187, 99, 155, 201, 77, 13, 250] as Array<number>
-    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 3)
     const size = new BN(50000000)
 
     const makeTx = await program
@@ -355,6 +356,8 @@ describe("promisesprimitive", async () => {
         creator: newAccountKp.publicKey
       })
       .signers([otherAccountKp])?.transaction() ?? undefined;
+
+    await new Promise(resolve => setTimeout(resolve, 4000));
 
     const nonCreatorBreakTxConfirmation = async () => {
       return sendAndConfirmTransaction(

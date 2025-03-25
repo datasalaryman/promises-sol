@@ -45,6 +45,7 @@ pub mod promisesprimitive {
         deadline_secs: u64,
         size: u64,
     ) -> Result<()> {
+        require_gte!(deadline_secs, Clock::get().unwrap().unix_timestamp as u64);
         **ctx.accounts.promise_account.to_account_info().try_borrow_mut_lamports()? -= size;
         **ctx.accounts.signer.to_account_info().try_borrow_mut_lamports()? += size;
         msg!("Fulfilling a promise with {:?}", ctx.program_id);
@@ -57,6 +58,7 @@ pub mod promisesprimitive {
         deadline_secs: u64,
         size: u64,
     ) -> Result<()> {
+        require_gte!(Clock::get().unwrap().unix_timestamp as u64, deadline_secs);
         **ctx.accounts.promise_account.to_account_info().try_borrow_mut_lamports()? -= size;
         **ctx.accounts.signer.to_account_info().try_borrow_mut_lamports()? += size;
         msg!("Breaking a promise with {:?}", ctx.program_id);
