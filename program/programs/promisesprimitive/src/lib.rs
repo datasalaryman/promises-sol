@@ -6,7 +6,7 @@ const AUTHOR: Pubkey = pubkey!("fTcVudr5vjBanSe9eYuX9HS3DuzjWKwavYBMbhLn2SJ");
 
 #[program]
 pub mod promisesprimitive {
-    use anchor_lang::solana_program::instruction::Instruction;
+    use anchor_lang::solana_program::{instruction::Instruction, native_token::LAMPORTS_PER_SOL};
 
     use super::*;
 
@@ -18,11 +18,29 @@ pub mod promisesprimitive {
     ) -> Result<()> {
         ctx.accounts.promise_account.bump = ctx.bumps.promise_account;
         ctx.accounts.promise_account.size = size;
+
+        msg!("Checking if deadline is at a future time");
         require_gte!(deadline_secs, Clock::get().unwrap().unix_timestamp as u64);
         ctx.accounts.promise_account.unix_seconds = deadline_secs;
         ctx.accounts.promise_account.text = text;
 
+        const FEE_TO_AUTHOR: u64 = LAMPORTS_PER_SOL / 200;
 
+        msg!("Paying the author a fee");
+        let pay_author: Instruction = anchor_lang::solana_program::system_instruction::transfer(
+            &ctx.accounts.signer.key(),
+            &ctx.accounts.author.key(),
+            FEE_TO_AUTHOR,
+        );
+        let _ = anchor_lang::solana_program::program::invoke(
+            &pay_author,
+            &[
+                ctx.accounts.signer.to_account_info(),
+                ctx.accounts.author.to_account_info(),
+            ],
+        );
+
+        msg!("Transfering sol to new promise PDA");
         let hold_promise: Instruction = anchor_lang::solana_program::system_instruction::transfer(
             &ctx.accounts.signer.key(),
             &ctx.accounts.promise_account.key(),
@@ -35,7 +53,7 @@ pub mod promisesprimitive {
                 ctx.accounts.promise_account.to_account_info(),
             ],
         );
-        msg!("Making a promise with {:?}", ctx.program_id);
+        msg!("Made a promise with {:?}", ctx.program_id);
         Ok(())
     }
 
@@ -45,10 +63,14 @@ pub mod promisesprimitive {
         deadline_secs: u64,
         size: u64,
     ) -> Result<()> {
+        msg!("Checking if date criteria was met for fulfillment");
         require_gte!(deadline_secs, Clock::get().unwrap().unix_timestamp as u64);
+
+        msg!("Returning SOL to creator");
         **ctx.accounts.promise_account.to_account_info().try_borrow_mut_lamports()? -= size;
         **ctx.accounts.signer.to_account_info().try_borrow_mut_lamports()? += size;
-        msg!("Fulfilling a promise with {:?}", ctx.program_id);
+
+        msg!("Fulfilled a promise with {:?}", ctx.program_id);
         Ok(())
     }
 
@@ -58,10 +80,14 @@ pub mod promisesprimitive {
         deadline_secs: u64,
         size: u64,
     ) -> Result<()> {
+        msg!("Checking if date criteria was met for breaking");
         require_gte!(Clock::get().unwrap().unix_timestamp as u64, deadline_secs);
+
+        msg!("Sending SOL to author");
         **ctx.accounts.promise_account.to_account_info().try_borrow_mut_lamports()? -= size;
         **ctx.accounts.signer.to_account_info().try_borrow_mut_lamports()? += size;
-        msg!("Breaking a promise with {:?}", ctx.program_id);
+
+        msg!("Broke a promise with {:?}", ctx.program_id);
         Ok(())
     }
 
@@ -84,6 +110,8 @@ pub struct MakeSelfPromise<'info> {
         bump
     )]
     pub promise_account: Account<'info, SelfPromise>,
+    #[account(mut, address = AUTHOR)]
+    pub author: SystemAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -113,7 +141,7 @@ pub struct FulFillSelfPromise<'info> {
     size: u64,
 )]
 pub struct BreakSelfPromise<'info> {
-    #[account(address = AUTHOR)]
+    #[account(mut, address = AUTHOR)]
     pub signer: Signer<'info>,
     #[account(mut)]
     pub creator: SystemAccount<'info>,
