@@ -10,7 +10,9 @@ import { BN } from "bn.js";
 // setProvider(AnchorProvider.env());
 // const provider = getProvider()
 
-const program = workspace.Promisesprimitive as Program<Promisesprimitive>;
+/* eslint-disable */
+const program:Program<Promisesprimitive> = workspace.Promisesprimitive;
+/* eslint-disable */
 
 export const solanaRouter = createTRPCRouter({
   makePromiseGenerate: publicProcedure
