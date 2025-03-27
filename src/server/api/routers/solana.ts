@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { AnchorProvider, getProvider, Program, setProvider, web3, workspace } from "@coral-xyz/anchor";
-import { Promisesprimitive } from "target/types/promisesprimitive";
+import { Promisesprimitive } from "@/types/promisesprimitive";
 import { PublicKey } from "@solana/web3.js";
 import { getSHA256Hash } from "boring-webcrypto-sha256"
 import { BN } from "bn.js";
