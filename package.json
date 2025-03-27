@@ -55,7 +55,10 @@
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
-    "zod": "^3.23.3"
+    "zod": "^3.23.3",
+    "@coral-xyz/anchor": "^0.30.1",
+    "@solana-developers/helpers": "^2.8.1",
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
     "@types/eslint": "^8.56.10",
@@ -73,7 +76,17 @@
     "prettier": "^3.3.2",
     "prettier-plugin-tailwindcss": "^0.6.5",
     "tailwindcss": "^3.4.3",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3", 
+    "@types/bn.js": "^5.1.0",
+    "@types/chai": "^4.3.0",
+    "@types/chai-as-promised": "^8.0.2",
+    "@types/expect": "^24.3.2",
+    "@types/mocha": "^9.0.0",
+    "chai": "^4.3.4",
+    "chai-as-promised": "^8.0.1",
+    "mocha": "^9.0.3",
+    "ts-mocha": "^10.0.0",
+    "tsx": "^4.19.3"
   },
   "ct3aMetadata": {
     "initVersion": "7.38.1"

@@ -50,3 +50,11 @@ src/app/sandbox
 
 # drizzle
 drizzle/**
+
+# programs directories
+/.anchor
+.DS_Store
+/target
+**/*.rs.bk
+/test-ledger
+.yarn

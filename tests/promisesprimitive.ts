@@ -1,5 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
-import { BN, Program } from "@coral-xyz/anchor";
+import BN from "bn.js"
+import { Program } from "@coral-xyz/anchor";
 import { Promisesprimitive } from "../target/types/promisesprimitive";
 import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import 'dotenv/config';
