@@ -1,5 +1,6 @@
 import { promiseRouter } from "@/server/api/routers/promise";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { solanaRouter } from "@/server/api/routers/solana";
 
 /**
  * This is the primary router for your server.
@@ -8,6 +9,7 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
   promise: promiseRouter,
+  solana: solanaRouter,
 });
 
 // export type definition of API
