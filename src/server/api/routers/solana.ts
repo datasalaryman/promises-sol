@@ -7,6 +7,9 @@ import { PublicKey } from "@solana/web3.js";
 import { createHash } from "crypto";
 import { BN } from "bn.js";
 import { Promisesprimitive } from "@/types/promisesprimitive";
+import { TRPCError } from "@trpc/server";
+import Error from "next/error";
+import { MethodsBuilder } from "@coral-xyz/anchor/dist/cjs/program/namespace/methods";
 
 const program = new anchor.Program<Promisesprimitive>(
   idl,
@@ -16,33 +19,35 @@ const program = new anchor.Program<Promisesprimitive>(
 export const solanaRouter = createTRPCRouter({
   makePromiseGenerate: publicProcedure
     .input(z.object({
-      signer: z.string().nullish(),
+      signer: z.string(),
       text: z.string().max(255),
       deadline: z.number(),
       size: z.number()
     }))
-    .output(z.instanceof(anchor.web3.TransactionInstruction).nullish())
+    .output(z.string().nullable())
     .query( async ({ input }) => {
 
       if (!input.signer) {
         return null
       }
 
-      const textArray = Array.from(
+      const textArray = Array.from<number>(
         Uint8Array.from(
           createHash("sha256").update(input.text).digest(),
         ).subarray(0, 8),
       );
+
+      // console.log(textArray);
 
       const makeIx = await program
         .methods
         .makeSelfPromise(textArray, new BN(input.deadline), new BN(input.size))
         .accounts({
           signer: new PublicKey(input?.signer),
-        })
-        .instruction();
+        }).instruction();
 
-      return input.signer ? makeIx : null
+      return JSON.stringify(makeIx)
+
     }),
   fulfillPromiseGenerate: publicProcedure
     .input(z.object({
