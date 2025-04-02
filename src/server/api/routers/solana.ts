@@ -3,18 +3,19 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import * as anchor from "@coral-xyz/anchor";
 import idl from "@/idl/promisesprimitive.json"
-import { PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { createHash } from "crypto";
 import { BN } from "bn.js";
 import { Promisesprimitive } from "@/types/promisesprimitive";
-import { TRPCError } from "@trpc/server";
-import Error from "next/error";
-import { MethodsBuilder } from "@coral-xyz/anchor/dist/cjs/program/namespace/methods";
+import { env } from "@/env";
 
-const program = new anchor.Program<Promisesprimitive>(
-  idl,
-  anchor.AnchorProvider.local()
-);;
+// TODO: create connection method to call instead of dev env
+const connection = new Connection(env.RPC_URL, "confirmed");
+
+const program = new anchor.Program<Promisesprimitive>(idl, {
+  connection
+});
+
 
 export const solanaRouter = createTRPCRouter({
   makePromiseGenerate: publicProcedure
