@@ -52,12 +52,12 @@ export const solanaRouter = createTRPCRouter({
     }),
   fulfillPromiseGenerate: publicProcedure
     .input(z.object({
-      signer: z.instanceof(PublicKey),
+      signer: z.string(),
       text: z.string().length(255),
       deadline: z.number(),
       size: z.number()
     }))
-    .output(z.instanceof(anchor.web3.TransactionInstruction))
+    .output(z.string().nullable())
     .query( async ({ input }) => {
 
       const textArray = Array.from(
@@ -74,16 +74,16 @@ export const solanaRouter = createTRPCRouter({
         })
         .instruction();
 
-      return fulfillIx
+      return JSON.stringify(fulfillIx)
     }),
   breakPromiseGenerate: publicProcedure
     .input(z.object({
-      creator: z.instanceof(PublicKey),
+      creator: z.string(),
       text: z.string().length(255),
       deadline: z.number(),
       size: z.number()
     }))
-    .output(z.instanceof(anchor.web3.TransactionInstruction))
+    .output(z.string().nullable())
     .query( async ({ input }) => {
 
       const textArray = Array.from(
@@ -100,6 +100,6 @@ export const solanaRouter = createTRPCRouter({
         })
         .instruction();
 
-      return breakIx
+      return JSON.stringify(breakIx)
     })
 });
