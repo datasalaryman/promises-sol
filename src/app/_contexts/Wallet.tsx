@@ -8,19 +8,19 @@ import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import {
   WalletModalProvider
 } from '@solana/wallet-adapter-react-ui';
+import { env } from '@/env';
 
 export function WalletContext({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const network = WalletAdapterNetwork.Devnet;
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  const endpoint = env.NEXT_PUBLIC_RPC_URL
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
     ],
-    [network],
+    [endpoint],
   );
 
   return (
