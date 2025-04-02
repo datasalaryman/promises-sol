@@ -1,0 +1,8 @@
+# solana program dev
+migrations/**
+programs/**
+tests/**
+.mocharc.json
+Anchor.toml
+Cargo.lock
+Cargo.toml
