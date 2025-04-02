@@ -47,6 +47,7 @@ export const PromiseForm = () =>  {
   const { data: makeTx, isLoading, isError } = api.solana.makePromiseGenerate.useQuery({
     text: promiseContent, 
     deadline: epochTime, 
+    // @ts-expect-error - will only fire query if publicKey is defined
     signer: publicKey?.toString(), 
     size: promiseLamports
   }, {
