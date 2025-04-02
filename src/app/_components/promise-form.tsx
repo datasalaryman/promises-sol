@@ -21,6 +21,7 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { TransactionInstruction } from "@solana/web3.js";
 
 
 const WalletMultiButtonDynamic = dynamic(
@@ -43,7 +44,14 @@ export const PromiseForm = () =>  {
   const { publicKey } = useWallet();
   const [epochTime, setEpochTime] = useState<number>(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60);
 
-  // console.log(epoch)
+  const { data: makeTx, isLoading, isError } = api.solana.makePromiseGenerate.useQuery({
+    text: promiseContent, 
+    deadline: epochTime, 
+    signer: publicKey?.toString(), 
+    size: promiseLamports
+  }, {
+    enabled: !!publicKey
+  })
 
   const epochToDateOnly = (epochSeconds:number) : DateTime => {
     const currentDateMills = Math.floor(epochSeconds / (60 * 60 * 24)) * 24 * 60 * 60 * 1000;
@@ -109,6 +117,10 @@ export const PromiseForm = () =>  {
       lamports: BigInt(promiseLamports), 
       wallet: publicKey?.toString() ?? ''
     })
+
+    const makeTxParsed = makeTx ? JSON.parse(makeTx) as TransactionInstruction : null;
+
+    // console.log(makeTxParsed)
     
     toast(
       "Let's pretend you created a promise with SOL!", 
