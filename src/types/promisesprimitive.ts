@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/promisesprimitive.json`.
  */
 export type Promisesprimitive = {
-  "address": "8sL8SYGgy7JPbzQzA2MXtZzuHvgG4j84CeuV9Rxd42jb",
+  "address": "9NnVb7JtJL6WtKnWXB7NsTwZDrR7P616yRC4FxcXN2r5",
   "metadata": {
     "name": "promisesprimitive",
     "version": "0.1.0",

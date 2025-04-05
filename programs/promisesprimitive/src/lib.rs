@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("8sL8SYGgy7JPbzQzA2MXtZzuHvgG4j84CeuV9Rxd42jb");
+declare_id!("9NnVb7JtJL6WtKnWXB7NsTwZDrR7P616yRC4FxcXN2r5");
 
 const AUTHOR: Pubkey = pubkey!("fTcVudr5vjBanSe9eYuX9HS3DuzjWKwavYBMbhLn2SJ");
 
