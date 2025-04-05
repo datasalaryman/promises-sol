@@ -15,13 +15,16 @@ import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
-import { DateTime } from "luxon"; 
+import { DateTime } from "luxon";
 // Default styles that can be overridden by your app
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { api } from "@/trpc/react";
-import { toast } from "sonner";
 import Link from "next/link";
-import { TransactionInstruction } from "@solana/web3.js";
+import { AccountMeta, PublicKey, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import * as anchor from "@coral-xyz/anchor"
+import { env } from "@/env";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 
 const WalletMultiButtonDynamic = dynamic(
@@ -37,18 +40,18 @@ const WalletDisconnectButtonDynamic = dynamic(
 export const PromiseForm = () =>  {
 
   const renderDate = DateTime.now().setZone("utc");
-
-  const { connection } = useConnection();
   const [promiseContent, setPromiseContent] = useState("")
   const [promiseLamports, setPromiseLamports] = useState(10000000)
-  const { publicKey } = useWallet();
+  const connection = new anchor.web3.Connection(env.NEXT_PUBLIC_RPC_URL, "confirmed");
+  const { publicKey, signTransaction } = useWallet();
   const [epochTime, setEpochTime] = useState<number>(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60);
+  const { toast } = useToast()
 
   const { data: makeTx, isLoading, isError } = api.solana.makePromiseGenerate.useQuery({
-    text: promiseContent, 
-    deadline: epochTime, 
+    text: promiseContent,
+    deadline: epochTime,
     // @ts-expect-error - will only fire query if publicKey is defined
-    signer: publicKey?.toString(), 
+    signer: publicKey?.toString(),
     size: promiseLamports
   }, {
     enabled: !!publicKey
@@ -109,31 +112,96 @@ export const PromiseForm = () =>  {
 
   const createPromise = api.promise.create.useMutation()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     createPromise.mutate({
-      content: promiseContent, 
-      epoch: BigInt(epochTime), 
-      lamports: BigInt(promiseLamports), 
+      content: promiseContent,
+      epoch: BigInt(epochTime),
+      lamports: BigInt(promiseLamports),
       wallet: publicKey?.toString() ?? ''
     })
 
-    const makeTxParsed = makeTx ? JSON.parse(makeTx) as TransactionInstruction : null;
+    if (makeTx && publicKey) {
+      const parsedTx = JSON.parse(makeTx);
 
-    // console.log(makeTxParsed)
-    
-    toast(
-      "Let's pretend you created a promise with SOL!", 
-      {
-        description: `${BigInt(promiseLamports).toString()} lamports sent to the contract and can be released on ${epochToDateOnly(epochTime).toISODate()}`
+      // Reconstruct the TransactionInstruction
+      const transactionInstruction = new TransactionInstruction({
+        keys: parsedTx.keys.map((key:any) => ({
+          pubkey: new PublicKey(key.pubkey), // Convert string to PublicKey
+          isSigner: key.isSigner,
+          isWritable: key.isWritable,
+        })),
+        programId: new PublicKey(parsedTx.programId), // Convert string to PublicKey
+        data: Buffer.from(parsedTx.data), // Convert array or base64 string back to Buffer
+      });
+
+      // console.log(`keys: ${transactionInstruction.keys.map((key) => key.pubkey.toString()).join(",")}`)
+
+      const instructions = [transactionInstruction];
+
+      let signature: string | undefined = "";
+
+      try {
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed')
+
+        console.log(`blockhash: ${blockhash}, blockheight: ${lastValidBlockHeight}`)
+
+        const messageV0 = new anchor.web3.TransactionMessage({
+          payerKey: new PublicKey(publicKey.toString()),
+          recentBlockhash: blockhash,
+          instructions,
+        }).compileToV0Message()
+
+        const transaction = new VersionedTransaction(messageV0);
+
+        const signedTransaction = await signTransaction!(transaction)
+
+        toast({
+          title: "Transaction signed",
+          description: `Transaction signed by ${publicKey}`,
+        })
+
+        signature = await connection.sendTransaction(signedTransaction as VersionedTransaction, { skipPreflight: true, maxRetries: 0 })
+
+        toast({
+          title: "Transaction sent",
+          description: "Transaction sent to the network",
+        })
+
+        const confirmation = await connection.confirmTransaction({
+          signature,
+          blockhash,
+          lastValidBlockHeight,
+        });
+
+        if (!!confirmation.value.err) {
+          throw new Error(`${JSON.stringify(confirmation.value.err?.valueOf())}`);
+        }
+
+        toast({
+          title: "Confirmed Transaction",
+          description: "You successfully made a promise",
+          action: <ToastAction altText="View here" asChild><a href={"https://solscan.io/tx/" + signature} target="_blank">View here</a></ToastAction>,
+        })
+
+        setPromiseContent("")
+        setPromiseLamports(10000000)
+        setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60)
+
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          toast({
+            variant: "destructive", 
+            title: "Unsuccessful transaction",
+            description: `Transaction failed ${err.message}`,
+          })
+        } else {
+          //
+        }
       }
-    )
 
-    setPromiseContent("")
-    setPromiseLamports(10000000)
-    setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60)
-
+    }
   }
 
   return (
@@ -143,11 +211,9 @@ export const PromiseForm = () =>  {
           <CardTitle>Make a Promise</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 p-4 pt-0">
-          <WalletModalProvider>
-            { 
+            {
               publicKey ? <WalletDisconnectButtonDynamic/> : <WalletMultiButtonDynamic />
             }
-          </WalletModalProvider>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="promise">Promise</Label>
