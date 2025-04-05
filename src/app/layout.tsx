@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import "@/styles/globals.css";
 
 import { GeistSans } from "geist/font/sans";
