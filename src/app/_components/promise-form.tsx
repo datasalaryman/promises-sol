@@ -24,8 +24,8 @@ import {
 } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+
+import { useWallet } from "@solana/wallet-adapter-react";
 import { DateTime } from "luxon";
 // Default styles that can be overridden by your app
 import "@solana/wallet-adapter-react-ui/styles.css";
@@ -155,12 +155,12 @@ export const PromiseForm = () => {
     });
 
     if (makeTx && publicKey) {
-      const parsedTx = JSON.parse(makeTx);
+      const parsedTx = JSON.parse(makeTx) satisfies TransactionInstruction;
 
       // Reconstruct the TransactionInstruction
       const transactionInstruction = new TransactionInstruction({
         keys: parsedTx.keys.map((key: any) => ({
-          pubkey: new PublicKey(key.pubkey), // Convert string to PublicKey
+          pubkey: new PublicKey(key.pubkey as string), // Convert string to PublicKey
           isSigner: key.isSigner,
           isWritable: key.isWritable,
         })),
@@ -198,7 +198,7 @@ export const PromiseForm = () => {
         });
 
         signature = await connection.sendTransaction(
-          signedTransaction as VersionedTransaction,
+          signedTransaction,
           { skipPreflight: true, maxRetries: 0 },
         );
 

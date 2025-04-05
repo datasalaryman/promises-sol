@@ -6,7 +6,7 @@ import idl from "@/idl/promisesprimitive.json";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { createHash } from "crypto";
 import { BN } from "bn.js";
-import { Promisesprimitive } from "@/types/promisesprimitive";
+import { type Promisesprimitive } from "@/types/promisesprimitive";
 import { env } from "@/env";
 
 // TODO: create connection method to call instead of dev env
