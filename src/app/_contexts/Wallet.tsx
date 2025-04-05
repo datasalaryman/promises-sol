@@ -15,20 +15,19 @@ export function WalletContext({
 }: {
   children: React.ReactNode;
 }) {
-  const endpoint = env.NEXT_PUBLIC_RPC_URL
+  const network = WalletAdapterNetwork.Devnet;
+  const endpoint = useMemo(() => env.NEXT_PUBLIC_RPC_URL, [network]);
   const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-    ],
+    () => [],
     [endpoint],
   );
 
   return (
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
-        {/* <WalletModalProvider> */}
+        <WalletModalProvider>
           {children}
-        {/* </WalletModalProvider> */}
+        </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
   );
