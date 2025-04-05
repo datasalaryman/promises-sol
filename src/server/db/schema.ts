@@ -20,17 +20,17 @@ import { BugIcon } from "lucide-react";
  */
 export const createTable = mysqlTableCreator((name) => `promises-sol_${name}`);
 
-export const promisesSelf = createTable(
-  "promises_self",
-  {
-    id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
-    createdAt: timestamp("created_at")
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp("updated_at").onUpdateNow(),
-    promiseContent: tinytext("promise_content"), 
-    promiseEpoch: bigint("promise_epoch", { mode: "bigint", unsigned: true}), 
-    promiseLamports: bigint("promise_lamports", { mode: "bigint", unsigned: true }), 
-    promiseWallet: tinytext("promise_wallet")
-  }
-);
+export const promisesSelf = createTable("promises_self", {
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: timestamp("updated_at").onUpdateNow(),
+  promiseContent: tinytext("promise_content"),
+  promiseEpoch: bigint("promise_epoch", { mode: "bigint", unsigned: true }),
+  promiseLamports: bigint("promise_lamports", {
+    mode: "bigint",
+    unsigned: true,
+  }),
+  promiseWallet: tinytext("promise_wallet"),
+});

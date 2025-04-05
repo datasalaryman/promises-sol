@@ -12,13 +12,13 @@ export const env = createEnv({
       .url()
       .refine(
         (str) => !str.includes("YOUR_MYSQL_URL_HERE"),
-        "You forgot to change the default URL"
+        "You forgot to change the default URL",
       ),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    RPC_URL: z.string().url()
-    // ANCHOR_WALLET: z.string(), 
+    RPC_URL: z.string().url(),
+    // ANCHOR_WALLET: z.string(),
     // AUTHOR_KEYPAIR: z.string()
   },
 
@@ -40,9 +40,9 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
-    RPC_URL: process.env.RPC_URL, 
-    NEXT_PUBLIC_RPC_URL: process.env.NEXT_PUBLIC_RPC_URL
-    // ANCHOR_WALLET: process.env.ANCHOR_WALLET, 
+    RPC_URL: process.env.RPC_URL,
+    NEXT_PUBLIC_RPC_URL: process.env.NEXT_PUBLIC_RPC_URL,
+    // ANCHOR_WALLET: process.env.ANCHOR_WALLET,
     // AUTHOR_KEYPAIR: process.env.AUTHOR_KEYPAIR
   },
   /**

@@ -6,70 +6,80 @@ import { desc, eq } from "drizzle-orm";
 
 export const promiseRouter = createTRPCRouter({
   create: publicProcedure
-    .input(z.object({
-      content: z.string(),
-      epoch: z.bigint(), 
-      lamports: z.bigint(), 
-      wallet: z.string()
-    }))
+    .input(
+      z.object({
+        content: z.string(),
+        epoch: z.bigint(),
+        lamports: z.bigint(),
+        wallet: z.string(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       await ctx.db.insert(promisesSelf).values({
-        promiseContent: input.content, 
-        promiseEpoch: input.epoch, 
-        promiseLamports: input.lamports, 
-        promiseWallet: input.wallet
+        promiseContent: input.content,
+        promiseEpoch: input.epoch,
+        promiseLamports: input.lamports,
+        promiseWallet: input.wallet,
       });
     }),
-    release: publicProcedure
-    .input(z.object({
-      id: z.number()
-    }))
+  release: publicProcedure
+    .input(
+      z.object({
+        id: z.number(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.delete(promisesSelf).where(
-        eq(promisesSelf.id, input.id)
-      );
+      await ctx.db.delete(promisesSelf).where(eq(promisesSelf.id, input.id));
     }),
   getAll: publicProcedure
-    .input(z.object({
-      wallet: z.string()
-    }))
-    .output(
+    .input(
       z.object({
-        id: z.number(),
-        createdAt: z.date(),
-        updatedAt: z.date().nullable(),
-        promiseContent: z.string().nullable(), 
-        promiseEpoch: z.bigint().nullable(), 
-        promiseLamports: z.bigint().nullable(), 
-        promiseWallet: z.string().nullable()
-      }).array()
+        wallet: z.string(),
+      }),
     )
-    .query( async ({ ctx, input }) => {
+    .output(
+      z
+        .object({
+          id: z.number(),
+          createdAt: z.date(),
+          updatedAt: z.date().nullable(),
+          promiseContent: z.string().nullable(),
+          promiseEpoch: z.bigint().nullable(),
+          promiseLamports: z.bigint().nullable(),
+          promiseWallet: z.string().nullable(),
+        })
+        .array(),
+    )
+    .query(async ({ ctx, input }) => {
       const promises = await ctx.db.query.promisesSelf.findMany({
-        where: eq(promisesSelf.promiseWallet, input.wallet), 
-        orderBy: desc(promisesSelf.promiseEpoch)
-      })
-      return promises
+        where: eq(promisesSelf.promiseWallet, input.wallet),
+        orderBy: desc(promisesSelf.promiseEpoch),
+      });
+      return promises;
     }),
   getOne: publicProcedure
-    .input(z.object({
-      id: z.number()
-    }))
-    .output(
+    .input(
       z.object({
         id: z.number(),
-        createdAt: z.date(),
-        updatedAt: z.date().nullable(),
-        promiseContent: z.string().nullable(), 
-        promiseEpoch: z.bigint().nullable(), 
-        promiseLamports: z.bigint().nullable(), 
-        promiseWallet: z.string().nullable()
-      }).nullish()
+      }),
     )
-    .query( async ({ ctx, input }) => {
+    .output(
+      z
+        .object({
+          id: z.number(),
+          createdAt: z.date(),
+          updatedAt: z.date().nullable(),
+          promiseContent: z.string().nullable(),
+          promiseEpoch: z.bigint().nullable(),
+          promiseLamports: z.bigint().nullable(),
+          promiseWallet: z.string().nullable(),
+        })
+        .nullish(),
+    )
+    .query(async ({ ctx, input }) => {
       const promise = await ctx.db.query.promisesSelf.findFirst({
-        where: eq(promisesSelf.id, input.id)
-      })
-      return promise
-    })
+        where: eq(promisesSelf.id, input.id),
+      });
+      return promise;
+    }),
 });
