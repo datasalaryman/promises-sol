@@ -37,6 +37,7 @@ import {
   Transaction,
   TransactionInstruction,
   TransactionMessage,
+  VersionedMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
@@ -70,6 +71,7 @@ export const PromiseForm = () => {
   );
   const { toast } = useToast();
 
+  // TODO: output should be a number array
   const {
     data: makeTx,
     isLoading,
@@ -84,6 +86,7 @@ export const PromiseForm = () => {
     },
     {
       enabled: !!publicKey,
+      // TODO: refetch every 30 seconds
     },
   );
 
@@ -155,6 +158,8 @@ export const PromiseForm = () => {
     });
 
     if (makeTx && publicKey) {
+
+      // TODO: Put all of this on the makePromise tRPC route
       const parsedTx = JSON.parse(makeTx) satisfies TransactionInstruction;
 
       // Reconstruct the TransactionInstruction
@@ -175,6 +180,8 @@ export const PromiseForm = () => {
       let signature: string | undefined = "";
 
       try {
+
+        // TODO: Put this all behind the server
         const { blockhash, lastValidBlockHeight } =
           await connection.getLatestBlockhash("confirmed");
 
@@ -190,13 +197,25 @@ export const PromiseForm = () => {
 
         const transaction = new VersionedTransaction(messageV0);
 
+        // const txSerialized = transaction.serialize()
+
+        // console.log(`Unsigned TX serialized - ${txSerialized}`)
+
+        // const txDeserialized = VersionedTransaction.deserialize(txSerialized)
+
+
         const signedTransaction = await signTransaction!(transaction);
+
+        // const signedSerialized = signedTransaction.serialize()
+
+        // console.log(`Signed TX serialized - ${signedSerialized}`)
 
         toast({
           title: "Transaction signed",
           description: `Transaction signed by ${publicKey}`,
         });
 
+        // TODO: serialize and send back to the server for sending
         signature = await connection.sendTransaction(
           signedTransaction,
           { skipPreflight: true, maxRetries: 0 },
