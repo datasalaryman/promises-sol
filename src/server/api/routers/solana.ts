@@ -48,6 +48,7 @@ export const solanaRouter = createTRPCRouter({
 
       const instructions = [makeIx];
 
+      // TODO: add caching here
       const { blockhash, lastValidBlockHeight } =
         await connection.getLatestBlockhash("confirmed");
       
