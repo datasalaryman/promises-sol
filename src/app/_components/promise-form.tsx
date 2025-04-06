@@ -83,7 +83,7 @@ export const PromiseForm = () => {
       size: promiseLamports,
     },
     {
-      enabled: !!publicKey,
+      enabled: !!publicKey && !!promiseContent,
       // TODO: refetch every 30 seconds
     },
   );
