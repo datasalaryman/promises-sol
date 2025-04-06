@@ -9,7 +9,6 @@ import { BN } from "bn.js";
 import { type Promisesprimitive } from "@/types/promisesprimitive";
 import { env } from "@/env";
 
-// TODO: create connection method to call instead of dev env
 const connection = new Connection(env.RPC_URL, "confirmed");
 
 const program = new anchor.Program<Promisesprimitive>(idl, {

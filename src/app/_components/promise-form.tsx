@@ -71,7 +71,6 @@ export const PromiseForm = () => {
   );
   const { toast } = useToast();
 
-  // TODO: output should be a number array
   const {
     data: makeTx,
     refetch: makeRefetch
@@ -206,7 +205,7 @@ export const PromiseForm = () => {
       setPromiseContent("");
       setPromiseLamports(10000000);
       setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60);
-      
+
       makeRefetch()
     } catch (err: unknown) {
       if (err instanceof Error) {
