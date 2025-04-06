@@ -200,6 +200,7 @@ export const PromiseForm = () => {
         epoch: BigInt(epochTime),
         lamports: BigInt(promiseLamports),
         wallet: publicKey?.toString() ?? "",
+        // TODO: add promise PDA here
       });
 
       setPromiseContent("");
