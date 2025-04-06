@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import * as anchor from "@coral-xyz/anchor";
 import idl from "@/idl/promisesprimitive.json";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { createHash } from "crypto";
 import { BN } from "bn.js";
 import { type Promisesprimitive } from "@/types/promisesprimitive";
@@ -26,19 +26,18 @@ export const solanaRouter = createTRPCRouter({
         size: z.number(),
       }),
     )
-    .output(z.string().nullable())
+    .output(z.object({
+      serialTx: z.number().array(), 
+      blockhash: z.string(),  
+      blockheight: z.number()
+    }))
     .query(async ({ input }) => {
-      if (!input.signer) {
-        return null;
-      }
 
       const textArray = Array.from<number>(
         Uint8Array.from(
           createHash("sha256").update(input.text).digest(),
         ).subarray(0, 8),
       );
-
-      // console.log(textArray);
 
       const makeIx = await program.methods
         .makeSelfPromise(textArray, new BN(input.deadline), new BN(input.size))
@@ -47,7 +46,29 @@ export const solanaRouter = createTRPCRouter({
         })
         .instruction();
 
-      return JSON.stringify(makeIx);
+      const instructions = [makeIx];
+
+      const { blockhash, lastValidBlockHeight } =
+        await connection.getLatestBlockhash("confirmed");
+      
+      console.log(
+        `blockhash: ${blockhash}, blockheight: ${lastValidBlockHeight}`,
+      );
+
+      const messageV0 = new anchor.web3.TransactionMessage({
+        payerKey: new PublicKey(input.signer),
+        recentBlockhash: blockhash,
+        instructions,
+      }).compileToV0Message();
+      
+      const transaction = new VersionedTransaction(messageV0);
+
+      return {
+        serialTx: Array.from(transaction.serialize()), 
+        blockhash: blockhash, 
+        blockheight: lastValidBlockHeight
+      }
+
     }),
   fulfillPromiseGenerate: publicProcedure
     .input(

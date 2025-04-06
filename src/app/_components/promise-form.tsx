@@ -74,8 +74,7 @@ export const PromiseForm = () => {
   // TODO: output should be a number array
   const {
     data: makeTx,
-    isLoading,
-    isError,
+    refetch: makeRefetch
   } = api.solana.makePromiseGenerate.useQuery(
     {
       text: promiseContent,
@@ -157,112 +156,65 @@ export const PromiseForm = () => {
       wallet: publicKey?.toString() ?? "",
     });
 
-    if (makeTx && publicKey) {
+    let signature: string = "";
 
-      // TODO: Put all of this on the makePromise tRPC route
-      const parsedTx = JSON.parse(makeTx) satisfies TransactionInstruction;
-
-      // Reconstruct the TransactionInstruction
-      const transactionInstruction = new TransactionInstruction({
-        keys: parsedTx.keys.map((key: any) => ({
-          pubkey: new PublicKey(key.pubkey as string), // Convert string to PublicKey
-          isSigner: key.isSigner,
-          isWritable: key.isWritable,
-        })),
-        programId: new PublicKey(parsedTx.programId), // Convert string to PublicKey
-        data: Buffer.from(parsedTx.data), // Convert array or base64 string back to Buffer
+    try {
+      const txDeserialized = VersionedTransaction.deserialize(new Uint8Array(makeTx.serialTx))
+      const signedTransaction = await signTransaction!(txDeserialized);
+      // const signedSerialized = signedTransaction.serialize()
+      // console.log(`Signed TX serialized - ${signedSerialized}`)
+      toast({
+        title: "Transaction signed",
+        description: `Transaction signed by ${publicKey}`,
       });
 
-      // console.log(`keys: ${transactionInstruction.keys.map((key) => key.pubkey.toString()).join(",")}`)
+      // TODO: serialize and send back to the server for sending
+      signature = await connection.sendTransaction(
+        signedTransaction,
+        { skipPreflight: true, maxRetries: 0 },
+      );
 
-      const instructions = [transactionInstruction];
+      toast({
+        title: "Transaction sent",
+        description: "Transaction sent to the network",
+      });
 
-      let signature: string | undefined = "";
+      const confirmation = await connection.confirmTransaction({
+        signature,
+        blockhash: makeTx.blockhash,
+        lastValidBlockHeight: makeTx.blockheight,
+      });
 
-      try {
-
-        // TODO: Put this all behind the server
-        const { blockhash, lastValidBlockHeight } =
-          await connection.getLatestBlockhash("confirmed");
-
-        console.log(
-          `blockhash: ${blockhash}, blockheight: ${lastValidBlockHeight}`,
+      if (!!confirmation.value.err) {
+        throw new Error(
+          `${JSON.stringify(confirmation.value.err?.valueOf())}`,
         );
-
-        const messageV0 = new anchor.web3.TransactionMessage({
-          payerKey: new PublicKey(publicKey.toString()),
-          recentBlockhash: blockhash,
-          instructions,
-        }).compileToV0Message();
-
-        const transaction = new VersionedTransaction(messageV0);
-
-        // const txSerialized = transaction.serialize()
-
-        // console.log(`Unsigned TX serialized - ${txSerialized}`)
-
-        // const txDeserialized = VersionedTransaction.deserialize(txSerialized)
-
-
-        const signedTransaction = await signTransaction!(transaction);
-
-        // const signedSerialized = signedTransaction.serialize()
-
-        // console.log(`Signed TX serialized - ${signedSerialized}`)
-
+      }
+      toast({
+        title: "Confirmed Transaction",
+        description: "You successfully made a promise",
+        action: (
+          <ToastAction altText="View here" asChild>
+            <a href={"https://solscan.io/tx/" + signature} target="_blank">
+              View here
+            </a>
+          </ToastAction>
+        ),
+      });
+      setPromiseContent("");
+      setPromiseLamports(10000000);
+      setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60);
+      makeRefetch()
+    } catch (err: unknown) {
+      if (err instanceof Error) {
         toast({
-          title: "Transaction signed",
-          description: `Transaction signed by ${publicKey}`,
+          variant: "destructive",
+          title: "Unsuccessful transaction",
+          description: `Transaction failed ${err.message}`,
         });
-
-        // TODO: serialize and send back to the server for sending
-        signature = await connection.sendTransaction(
-          signedTransaction,
-          { skipPreflight: true, maxRetries: 0 },
-        );
-
-        toast({
-          title: "Transaction sent",
-          description: "Transaction sent to the network",
-        });
-
-        const confirmation = await connection.confirmTransaction({
-          signature,
-          blockhash,
-          lastValidBlockHeight,
-        });
-
-        if (!!confirmation.value.err) {
-          throw new Error(
-            `${JSON.stringify(confirmation.value.err?.valueOf())}`,
-          );
-        }
-
-        toast({
-          title: "Confirmed Transaction",
-          description: "You successfully made a promise",
-          action: (
-            <ToastAction altText="View here" asChild>
-              <a href={"https://solscan.io/tx/" + signature} target="_blank">
-                View here
-              </a>
-            </ToastAction>
-          ),
-        });
-
-        setPromiseContent("");
-        setPromiseLamports(10000000);
-        setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          toast({
-            variant: "destructive",
-            title: "Unsuccessful transaction",
-            description: `Transaction failed ${err.message}`,
-          });
-        } else {
-          //
-        }
+        makeRefetch()
+      } else {
+        //
       }
     }
   };
