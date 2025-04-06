@@ -149,13 +149,6 @@ export const PromiseForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    createPromise.mutate({
-      content: promiseContent,
-      epoch: BigInt(epochTime),
-      lamports: BigInt(promiseLamports),
-      wallet: publicKey?.toString() ?? "",
-    });
-
     let signature: string = "";
 
     try {
@@ -201,9 +194,18 @@ export const PromiseForm = () => {
           </ToastAction>
         ),
       });
+
+      createPromise.mutate({
+        content: promiseContent,
+        epoch: BigInt(epochTime),
+        lamports: BigInt(promiseLamports),
+        wallet: publicKey?.toString() ?? "",
+      });
+
       setPromiseContent("");
       setPromiseLamports(10000000);
       setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60);
+      
       makeRefetch()
     } catch (err: unknown) {
       if (err instanceof Error) {
