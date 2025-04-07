@@ -30,20 +30,16 @@ import { DateTime } from "luxon";
 // Default styles that can be overridden by your app
 import "@solana/wallet-adapter-react-ui/styles.css";
 import { api } from "@/trpc/react";
+import { trpc } from "@/trpc/vanilla";
 import Link from "next/link";
 import {
-  AccountMeta,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-  TransactionMessage,
-  VersionedMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { TRPCClientError } from "@trpc/client";
 
 const WalletMultiButtonDynamic = dynamic(
   async () =>
@@ -70,6 +66,8 @@ export const PromiseForm = () => {
     Math.floor(renderDate.toMillis() / (1000 * 60)) * 60,
   );
   const { toast } = useToast();
+
+  const [txSigned, setTxSigned] = useState<number[] | undefined>(undefined)
 
   const {
     data: makeTx,
@@ -153,41 +151,35 @@ export const PromiseForm = () => {
     try {
       const txDeserialized = VersionedTransaction.deserialize(new Uint8Array(makeTx.serialTx))
       const signedTransaction = await signTransaction!(txDeserialized);
-      // const signedSerialized = signedTransaction.serialize()
-      // console.log(`Signed TX serialized - ${signedSerialized}`)
+
       toast({
         title: "Transaction signed",
         description: `Transaction signed by ${publicKey}`,
       });
 
-      // TODO: serialize and send back to the server for sending
-      signature = await connection.sendTransaction(
-        signedTransaction,
-        { skipPreflight: true, maxRetries: 0 },
-      );
+      const serialTx = Array.from(signedTransaction.serialize());
+
+      const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
+        serialTx,
+        blockhash: makeTx.blockhash,
+        blockheight: makeTx.blockheight
+      });
+
+      if (confirmationErr) {
+        throw new Error(`Transaction confirmation error: ${confirmationErr}`);
+      }
 
       toast({
         title: "Transaction sent",
         description: "Transaction sent to the network",
       });
 
-      const confirmation = await connection.confirmTransaction({
-        signature,
-        blockhash: makeTx.blockhash,
-        lastValidBlockHeight: makeTx.blockheight,
-      });
-
-      if (!!confirmation.value.err) {
-        throw new Error(
-          `${JSON.stringify(confirmation.value.err?.valueOf())}`,
-        );
-      }
       toast({
         title: "Confirmed Transaction",
         description: "You successfully made a promise",
         action: (
           <ToastAction altText="View here" asChild>
-            <a href={"https://solscan.io/tx/" + signature} target="_blank">
+            <a href={"https://solscan.io/tx/" + txSig} target="_blank">
               View here
             </a>
           </ToastAction>
@@ -207,16 +199,22 @@ export const PromiseForm = () => {
       setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60);
 
       makeRefetch()
+
     } catch (err: unknown) {
-      if (err instanceof Error) {
+      if (err instanceof TRPCClientError) {
+        toast({
+          variant: "destructive",
+          title: "TRPC Client Error",
+          description: `${JSON.stringify(err.shape)}`,
+        });
+        makeRefetch()
+      } else if (err instanceof Error) {
         toast({
           variant: "destructive",
           title: "Unsuccessful transaction",
           description: `Transaction failed ${err.message}`,
         });
         makeRefetch()
-      } else {
-        //
       }
     }
   };
