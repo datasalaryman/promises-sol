@@ -165,14 +165,14 @@ export const PromiseForm = () => {
         blockheight: makeTx.blockheight
       });
 
-      if (confirmationErr) {
-        throw new Error(`Transaction confirmation error: ${confirmationErr}`);
-      }
-
       toast({
         title: "Transaction sent",
         description: "Transaction sent to the network",
       });
+
+      if (confirmationErr) {
+        throw new Error(`Transaction confirmation error: ${confirmationErr}`);
+      }
 
       toast({
         title: "Confirmed Transaction",
