@@ -15,13 +15,13 @@ export const rpcRouter = createTRPCRouter({
     }))
     .output(z.object({
       txSig: z.string(), 
-      confirmation: z.string()
+      confirmationErr: z.string().nullish()
     }))
     .query( async ({ctx, input}) => {
 
       const signature = await connection.sendTransaction(
         VersionedTransaction.deserialize(new Uint8Array(input.serialTx)),
-        { skipPreflight: true, maxRetries: 0 },
+        { maxRetries: 0 },
       );
 
       const confirmation = await connection.confirmTransaction({
@@ -32,7 +32,7 @@ export const rpcRouter = createTRPCRouter({
 
       return {
         txSig: signature, 
-        confirmation: JSON.stringify(confirmation)
+        confirmationErr: confirmation.value.err?.toString()
       }
 
     })
