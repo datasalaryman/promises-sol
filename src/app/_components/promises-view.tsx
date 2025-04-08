@@ -9,8 +9,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import "@solana/wallet-adapter-react-ui/styles.css";
 import { api } from "@/trpc/react";
 import Link from "next/link";
-import { Drawer } from "vaul";
-import { Button } from "@/components/ui/button";
+import { FulfillDrawer } from "@/app/_components/fulfill-drawer";
 
 const WalletMultiButtonDynamic = dynamic(
   async () =>
@@ -34,12 +33,6 @@ export const PromisesView = () => {
     isLoading,
     isError,
   } = api.promise.getAll.useQuery({ wallet: publicKey?.toString() ?? "" });
-
-  const releasePromise = api.promise.release.useMutation();
-
-  const handlePromiseRelease = async (id: number) => {
-    releasePromise.mutate({ id: id });
-  };
 
   if (isLoading) {
     return (
@@ -109,72 +102,13 @@ export const PromisesView = () => {
         {(result?.length ?? 0 > 0)
           ? result?.map((promise) => {
               return (
-                <Drawer.Root key={promise.id} direction="right">
-                  <Drawer.Trigger asChild>
-                    <div className="pb-2 pr-2">
-                      <Card className="h-40 w-80 hover:border-black">
-                        <CardHeader>
-                          <CardTitle className="truncate">
-                            {promise.promiseContent}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-8">
-                          <strong>Expires</strong>: {promise.promiseEpoch}{" "}
-                          <br />
-                          <strong>Size</strong>:{" "}
-                          {parseInt(
-                            promise.promiseLamports?.toString() ?? "0",
-                          ) /
-                            10 ** 9}{" "}
-                          SOL
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </Drawer.Trigger>
-                  <Drawer.Portal>
-                    <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-                    <Drawer.Content
-                      className="fixed bottom-0 right-0 top-0 z-10 flex w-2/3 outline-none sm:w-1/2"
-                      // The gap between the edge of the screen and the drawer is 8px in this case.
-                      style={
-                        {
-                          "--initial-transform": "calc(100% + 8px)",
-                        } as React.CSSProperties
-                      }
-                    >
-                      <div className="flex h-full w-full grow flex-col place-content-between rounded-none bg-zinc-50 p-5">
-                        <div className="max-w-md place-content-between">
-                          <div>
-                            <Drawer.Title className="mb-2 text-wrap break-words font-medium">
-                              {promise.promiseContent}
-                            </Drawer.Title>
-                            <div>
-                              <strong>Expires: </strong> {promise.promiseEpoch}
-                            </div>
-                            <div>
-                              <strong>Size: </strong>{" "}
-                              {parseInt(
-                                promise.promiseLamports?.toString() ?? "0",
-                              ) /
-                                10 ** 9}{" "}
-                              SOL
-                            </div>
-                          </div>
-                          <Drawer.Description />
-                        </div>
-                        <Drawer.Close asChild>
-                          <Button
-                            onClick={async () =>
-                              await handlePromiseRelease(promise.id)
-                            }
-                          >
-                            Release Promise
-                          </Button>
-                        </Drawer.Close>
-                      </div>
-                    </Drawer.Content>
-                  </Drawer.Portal>
-                </Drawer.Root>
+                <FulfillDrawer
+                  key={promise.id}
+                  id={promise.id}
+                  promiseContent={promise.promiseContent ?? ""}
+                  promiseEpoch={promise.promiseEpoch?.toString() ?? ""  }
+                  promiseLamports={promise.promiseLamports ?? 0n}
+                />
               );
             })
           : null}
