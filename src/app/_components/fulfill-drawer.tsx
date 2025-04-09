@@ -20,7 +20,7 @@ type FulfillDrawerProps = {
 };
 
 
-export const FulfillDrawer = ({
+export const FulfillDrawer = async ({
   id,
   promiseContent,
   promiseEpoch,
@@ -33,21 +33,21 @@ const [isOpen, setIsOpen] = useState(false);
 
 const releasePromise = api.promise.release.useMutation();
 
-  const {
-    data: fulfillTx,
-    refetch: fulfillRefetch
-  } = api.solana.fulfillPromiseGenerate.useQuery({
+const {
+  data: fulfillTx,
+  refetch: fulfillRefetch
+} = api.solana.fulfillPromiseGenerate.useQuery({
   text: promiseContent,
-  // @ts-expect-error - will only fire query if publicKey is defined
-  signer: publicKey?.toString(),
+  signer: `${publicKey?.toString()}`,
   deadline: parseInt(promiseEpoch),
   size: parseInt(promiseLamports?.toString() ?? "0"),
 }, {
   enabled: !!publicKey && isOpen,
-      // TODO: refetch every 30 seconds
+  // TODO: refetch every 30 seconds
 },);
 
 const handlePromiseRelease = async (id: number) => {
+  // @ts-expect-error - will only fire query if publicKey is defined
   const txDeserialized = VersionedTransaction.deserialize(new Uint8Array(fulfillTx.serialTx))
   const signedTransaction = await signTransaction!(txDeserialized);
 
@@ -60,7 +60,9 @@ const handlePromiseRelease = async (id: number) => {
 
   const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
     serialTx,
+    // @ts-expect-error - will only fire query if publicKey is defined
     blockhash: fulfillTx.blockhash,
+    // @ts-expect-error - will only fire query if publicKey is defined
     blockheight: fulfillTx.blockheight
   });
 
