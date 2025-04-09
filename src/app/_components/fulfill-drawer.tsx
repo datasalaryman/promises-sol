@@ -5,6 +5,12 @@ import { Drawer } from "vaul";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
+import { PublicKey, VersionedTransaction } from "@solana/web3.js";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { toast } from "@/hooks/use-toast";
+import { trpc } from "@/trpc/vanilla";
+import { ToastAction } from "@/components/ui/toast";
+import { useState } from "react";
 
 type FulfillDrawerProps = {
   id: number;
@@ -21,14 +27,68 @@ export const FulfillDrawer = ({
   promiseLamports,
 }: FulfillDrawerProps) => {
 
+const { publicKey, signTransaction } = useWallet();
+const [isOpen, setIsOpen] = useState(false);
+
+
 const releasePromise = api.promise.release.useMutation();
 
+  const {
+    data: fulfillTx,
+    refetch: fulfillRefetch
+  } = api.solana.fulfillPromiseGenerate.useQuery({
+  text: promiseContent,
+  // @ts-expect-error - will only fire query if publicKey is defined
+  signer: publicKey?.toString(),
+  deadline: parseInt(promiseEpoch),
+  size: parseInt(promiseLamports?.toString() ?? "0"),
+}, {
+  enabled: !!publicKey && isOpen,
+      // TODO: refetch every 30 seconds
+},);
+
 const handlePromiseRelease = async (id: number) => {
+  const txDeserialized = VersionedTransaction.deserialize(new Uint8Array(fulfillTx.serialTx))
+  const signedTransaction = await signTransaction!(txDeserialized);
+
+  toast({
+    title: "Transaction signed",
+    description: `Transaction signed by ${publicKey}`,
+  });
+
+  const serialTx = Array.from(signedTransaction.serialize());
+
+  const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
+    serialTx,
+    blockhash: fulfillTx.blockhash,
+    blockheight: fulfillTx.blockheight
+  });
+
+  toast({
+    title: "Transaction sent",
+    description: "Transaction sent to the network",
+  });
+
+  if (confirmationErr) {
+    throw new Error(`Transaction confirmation error: ${confirmationErr}`);
+  }
+
+  toast({
+    title: "Confirmed Transaction",
+    description: "You successfully made a promise",
+    action: (
+      <ToastAction altText="View here" asChild>
+        <a href={"https://solscan.io/tx/" + txSig} target="_blank">
+          View here
+        </a>
+      </ToastAction>
+    ),
+  });
   releasePromise.mutate({ id: id });
 };
 
   return (
-    <Drawer.Root key={id} direction="right">
+    <Drawer.Root key={id} direction="right" open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <Drawer.Trigger asChild>
         <div className="pb-2 pr-2">
           <Card className="h-40 w-80 hover:border-black">
