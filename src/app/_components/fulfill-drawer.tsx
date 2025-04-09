@@ -50,7 +50,6 @@ const {
 );
 
 const handlePromiseRelease = async (id: number) => {
-  // @ts-expect-error - will only fire query if publicKey is defined
   const txDeserialized = VersionedTransaction.deserialize(new Uint8Array(fulfillTx.serialTx))
   const signedTransaction = await signTransaction!(txDeserialized);
 
@@ -63,9 +62,7 @@ const handlePromiseRelease = async (id: number) => {
 
   const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
     serialTx,
-    // @ts-expect-error - will only fire query if publicKey is defined
     blockhash: fulfillTx.blockhash,
-    // @ts-expect-error - will only fire query if publicKey is defined
     blockheight: fulfillTx.blockheight
   });
 
