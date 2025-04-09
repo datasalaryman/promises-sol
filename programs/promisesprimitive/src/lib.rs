@@ -16,6 +16,11 @@ pub mod promisesprimitive {
         deadline_secs: u64,
         size: u64,
     ) -> Result<()> {
+
+        // Check if promise size is at least 10000000 lamports
+        msg!("Checking if promise size is at least 10000000 lamports");
+        require_gte!(size, 10000000);
+
         ctx.accounts.promise_account.bump = ctx.bumps.promise_account;
         ctx.accounts.promise_account.size = size;
 
