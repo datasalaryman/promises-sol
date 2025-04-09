@@ -36,15 +36,25 @@ const releasePromise = api.promise.release.useMutation();
 const {
   data: fulfillTx,
   refetch: fulfillRefetch
-} = api.solana.fulfillPromiseGenerate.useQuery({
-  text: promiseContent,
-  signer: `${publicKey?.toString()}`,
-  deadline: parseInt(promiseEpoch),
-  size: parseInt(promiseLamports?.toString() ?? "0"),
-}, {
-  enabled: !!publicKey && isOpen,
-  // TODO: refetch every 30 seconds
-},);
+} = api.solana.fulfillPromiseGenerate.useQuery(
+  publicKey
+    ? {
+        text: promiseContent,
+        signer: publicKey.toString(),
+        deadline: parseInt(promiseEpoch),
+        size: parseInt(promiseLamports?.toString() ?? "0"),
+      }
+    : {
+        text: "",
+        signer: "",
+        deadline: 0,
+        size: 0,
+      },
+  {
+    enabled: !!publicKey && isOpen,
+    // TODO: refetch every 30 seconds
+  },
+);
 
 const handlePromiseRelease = async (id: number) => {
   // @ts-expect-error - will only fire query if publicKey is defined
