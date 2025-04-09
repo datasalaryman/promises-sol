@@ -457,4 +457,38 @@ describe("promisesprimitive", async () => {
       .and.be.an.instanceOf(Error)
   })
 
+  it("program error when promise size is less than 10,000,000 lamports", async () => {
+
+    const text = [99, 45, 178, 23, 111, 64, 37, 200] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10) // Set a reasonable deadline
+    const size = new BN(5000000) // Less than 10,000,000 lamports
+
+    const makeIx = await program
+      .methods
+      .makeSelfPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+      })
+      .instruction();
+
+    const makeTxConfirmation = async () => {
+      return sendVersionedTransaction(
+        provider.connection,
+        [makeIx],
+        [newAccountKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
+      )
+    }
+
+    // await makeTxConfirmation();
+
+    chai.expect(makeTxConfirmation()).to.eventually
+      .be.rejectedWith("Simulation failed.")
+      .and.be.an.instanceOf(Error)
+  });
+
 });
