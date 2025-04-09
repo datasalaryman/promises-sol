@@ -20,7 +20,7 @@ type FulfillDrawerProps = {
 };
 
 
-export const FulfillDrawer = async ({
+export const FulfillDrawer = ({
   id,
   promiseContent,
   promiseEpoch,
