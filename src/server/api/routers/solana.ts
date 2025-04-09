@@ -25,13 +25,14 @@ export const solanaRouter = createTRPCRouter({
         size: z.number(),
       }),
     )
-    .output(z.object({
-      serialTx: z.number().array(), 
-      blockhash: z.string(),  
-      blockheight: z.number()
-    }))
+    .output(
+      z.object({
+        serialTx: z.number().array(),
+        blockhash: z.string(),
+        blockheight: z.number(),
+      }),
+    )
     .query(async ({ input }) => {
-
       const textArray = Array.from<number>(
         Uint8Array.from(
           createHash("sha256").update(input.text).digest(),
@@ -50,7 +51,7 @@ export const solanaRouter = createTRPCRouter({
       // TODO: add caching here
       const { blockhash, lastValidBlockHeight } =
         await connection.getLatestBlockhash("confirmed");
-      
+
       console.log(
         `blockhash: ${blockhash}, blockheight: ${lastValidBlockHeight}`,
       );
@@ -60,26 +61,31 @@ export const solanaRouter = createTRPCRouter({
         recentBlockhash: blockhash,
         instructions,
       }).compileToV0Message();
-      
+
       const transaction = new VersionedTransaction(messageV0);
 
       return {
-        serialTx: Array.from(transaction.serialize()), 
-        blockhash: blockhash, 
-        blockheight: lastValidBlockHeight
-      }
-
+        serialTx: Array.from(transaction.serialize()),
+        blockhash: blockhash,
+        blockheight: lastValidBlockHeight,
+      };
     }),
   fulfillPromiseGenerate: publicProcedure
     .input(
       z.object({
         signer: z.string(),
-        text: z.string().length(255),
+        text: z.string().max(255),
         deadline: z.number(),
         size: z.number(),
       }),
     )
-    .output(z.string().nullable())
+    .output(
+      z.object({
+        serialTx: z.number().array(),
+        blockhash: z.string(),
+        blockheight: z.number(),
+      }),
+    )
     .query(async ({ input }) => {
       const textArray = Array.from(
         Uint8Array.from(
@@ -98,7 +104,29 @@ export const solanaRouter = createTRPCRouter({
         })
         .instruction();
 
-      return JSON.stringify(fulfillIx);
+      const instructions = [fulfillIx];
+
+      // TODO: add caching here
+      const { blockhash, lastValidBlockHeight } =
+        await connection.getLatestBlockhash("confirmed");
+
+      console.log(
+        `blockhash: ${blockhash}, blockheight: ${lastValidBlockHeight}`,
+      );
+
+      const messageV0 = new anchor.web3.TransactionMessage({
+        payerKey: new PublicKey(input.signer),
+        recentBlockhash: blockhash,
+        instructions,
+      }).compileToV0Message();
+
+      const transaction = new VersionedTransaction(messageV0);
+
+      return {
+        serialTx: Array.from(transaction.serialize()),
+        blockhash: blockhash,
+        blockheight: lastValidBlockHeight,
+      };
     }),
   breakPromiseGenerate: publicProcedure
     .input(
