@@ -146,15 +146,13 @@ export const PromiseForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    let signature: string = "";
-
     try {
       const txDeserialized = VersionedTransaction.deserialize(new Uint8Array(makeTx.serialTx))
       const signedTransaction = await signTransaction!(txDeserialized);
 
       toast({
         title: "Transaction signed",
-        description: `Transaction signed by ${publicKey}`,
+        description: `Transaction signed by ${publicKey?.toString()}`,
       });
 
       const serialTx = Array.from(signedTransaction.serialize());
@@ -198,7 +196,7 @@ export const PromiseForm = () => {
       setPromiseLamports(10000000);
       setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60);
 
-      makeRefetch()
+      await makeRefetch()
 
     } catch (err: unknown) {
       if (err instanceof TRPCClientError) {
@@ -207,14 +205,14 @@ export const PromiseForm = () => {
           title: "TRPC Client Error",
           description: `${JSON.stringify(err.shape)}`,
         });
-        makeRefetch()
+        await makeRefetch()
       } else if (err instanceof Error) {
         toast({
           variant: "destructive",
           title: "Unsuccessful transaction",
           description: `Transaction failed ${err.message}`,
         });
-        makeRefetch()
+        await makeRefetch()
       }
     }
   };

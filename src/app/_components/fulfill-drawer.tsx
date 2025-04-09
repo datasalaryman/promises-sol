@@ -37,23 +37,16 @@ const {
   data: fulfillTx,
   refetch: fulfillRefetch
 } = api.solana.fulfillPromiseGenerate.useQuery(
-  publicKey
-    ? {
-        text: promiseContent,
-        signer: publicKey.toString(),
-        deadline: parseInt(promiseEpoch),
-        size: parseInt(promiseLamports?.toString() ?? "0"),
-      }
-    : {
-        text: "",
-        signer: "",
-        deadline: 0,
-        size: 0,
-      },
-  {
-    enabled: !!publicKey && isOpen,
-    // TODO: refetch every 30 seconds
-  },
+{
+  text: promiseContent,
+  // @ts-expect-error - will only fire query if publicKey is defined
+  signer: publicKey?.toString(),
+  deadline: parseInt(promiseEpoch),
+  size: parseInt(promiseLamports?.toString() ?? "0"),
+}, {
+  enabled: !!publicKey && isOpen,
+  // TODO: refetch every 30 seconds
+},
 );
 
 const handlePromiseRelease = async (id: number) => {
@@ -63,7 +56,7 @@ const handlePromiseRelease = async (id: number) => {
 
   toast({
     title: "Transaction signed",
-    description: `Transaction signed by ${publicKey}`,
+    description: `Transaction signed by ${publicKey?.toString()}`,
   });
 
   const serialTx = Array.from(signedTransaction.serialize());

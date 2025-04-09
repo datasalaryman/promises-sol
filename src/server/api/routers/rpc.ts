@@ -9,12 +9,12 @@ const connection = new Connection(env.RPC_URL, "confirmed");
 export const rpcRouter = createTRPCRouter({
   sendAndConfirm: publicProcedure
     .input(z.object({
-      serialTx: z.number().array(), 
-      blockhash: z.string(),  
+      serialTx: z.number().array(),
+      blockhash: z.string(),
       blockheight: z.number()
     }))
     .output(z.object({
-      txSig: z.string(), 
+      txSig: z.string(),
       confirmationErr: z.string().nullish()
     }))
     .query( async ({ctx, input}) => {
@@ -31,8 +31,8 @@ export const rpcRouter = createTRPCRouter({
       });
 
       return {
-        txSig: signature, 
-        confirmationErr: confirmation.value.err?.toString()
+        txSig: signature,
+        confirmationErr: JSON.stringify(confirmation.value.err)
       }
 
     })
