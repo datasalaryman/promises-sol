@@ -26,8 +26,6 @@ const WalletDisconnectButtonDynamic = dynamic(
 export const PromisesView = () => {
   const { publicKey } = useWallet();
 
-  console.log(publicKey);
-
   const {
     data: result,
     isLoading,
