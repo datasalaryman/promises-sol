@@ -1,7 +1,7 @@
 import {
   defaultShouldDehydrateQuery,
   QueryClient,
-  MutationCache
+  MutationCache,
 } from "@tanstack/react-query";
 import SuperJSON from "superjson";
 
@@ -25,10 +25,10 @@ export const createQueryClient = () => {
     },
     mutationCache: new MutationCache({
       onSuccess: async () => {
-        await queryClient.invalidateQueries()
+        await queryClient.invalidateQueries();
       },
     }),
-  })
+  });
 
-  return queryClient
+  return queryClient;
 };

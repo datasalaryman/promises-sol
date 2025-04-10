@@ -1,4 +1,10 @@
-{
+/**
+ * Program IDL in camelCase format in order to be used in JS/TS.
+ *
+ * Note that this is only a type helper and is not the actual IDL. The original
+ * IDL can be found at `target/idl/promisesprimitive.json`.
+ */
+export type Promisesprimitive = {
   "address": "9NnVb7JtJL6WtKnWXB7NsTwZDrR7P616yRC4FxcXN2r5",
   "metadata": {
     "name": "promisesprimitive",
@@ -8,7 +14,7 @@
   },
   "instructions": [
     {
-      "name": "break_self_promise",
+      "name": "breakSelfPromise",
       "discriminator": [
         224,
         119,
@@ -31,7 +37,7 @@
           "writable": true
         },
         {
-          "name": "promise_account",
+          "name": "promiseAccount",
           "writable": true,
           "pda": {
             "seeds": [
@@ -61,7 +67,7 @@
               },
               {
                 "kind": "arg",
-                "path": "deadline_secs"
+                "path": "deadlineSecs"
               },
               {
                 "kind": "arg",
@@ -71,7 +77,7 @@
           }
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
@@ -86,7 +92,7 @@
           }
         },
         {
-          "name": "deadline_secs",
+          "name": "deadlineSecs",
           "type": "u64"
         },
         {
@@ -96,7 +102,7 @@
       ]
     },
     {
-      "name": "fulfill_self_promise",
+      "name": "fulfillSelfPromise",
       "discriminator": [
         191,
         163,
@@ -114,7 +120,7 @@
           "signer": true
         },
         {
-          "name": "promise_account",
+          "name": "promiseAccount",
           "writable": true,
           "pda": {
             "seeds": [
@@ -144,7 +150,7 @@
               },
               {
                 "kind": "arg",
-                "path": "deadline_secs"
+                "path": "deadlineSecs"
               },
               {
                 "kind": "arg",
@@ -154,7 +160,7 @@
           }
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
@@ -169,7 +175,7 @@
           }
         },
         {
-          "name": "deadline_secs",
+          "name": "deadlineSecs",
           "type": "u64"
         },
         {
@@ -179,7 +185,7 @@
       ]
     },
     {
-      "name": "make_self_promise",
+      "name": "makeSelfPromise",
       "discriminator": [
         227,
         242,
@@ -197,7 +203,7 @@
           "signer": true
         },
         {
-          "name": "promise_account",
+          "name": "promiseAccount",
           "writable": true,
           "pda": {
             "seeds": [
@@ -227,7 +233,7 @@
               },
               {
                 "kind": "arg",
-                "path": "deadline_secs"
+                "path": "deadlineSecs"
               },
               {
                 "kind": "arg",
@@ -242,7 +248,7 @@
           "address": "fTcVudr5vjBanSe9eYuX9HS3DuzjWKwavYBMbhLn2SJ"
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
@@ -257,7 +263,7 @@
           }
         },
         {
-          "name": "deadline_secs",
+          "name": "deadlineSecs",
           "type": "u64"
         },
         {
@@ -269,7 +275,7 @@
   ],
   "accounts": [
     {
-      "name": "SelfPromise",
+      "name": "selfPromise",
       "discriminator": [
         38,
         216,
@@ -284,7 +290,7 @@
   ],
   "types": [
     {
-      "name": "SelfPromise",
+      "name": "selfPromise",
       "type": {
         "kind": "struct",
         "fields": [
@@ -298,7 +304,7 @@
             }
           },
           {
-            "name": "unix_seconds",
+            "name": "unixSeconds",
             "type": "u64"
           },
           {
@@ -313,4 +319,4 @@
       }
     }
   ]
-}
+};

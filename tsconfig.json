@@ -27,7 +27,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    }, 
+    "types": ["mocha", "chai"],
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": [
     ".eslintrc.cjs",
@@ -38,5 +40,5 @@
     "**/*.js",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "migrations/**", "programs/**", "tests/**", ".mocharc.json", "Anchor.toml", "Cargo.lock", "Cargo.toml"]
 }
