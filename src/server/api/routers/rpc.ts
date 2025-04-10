@@ -32,7 +32,7 @@ export const rpcRouter = createTRPCRouter({
 
       return {
         txSig: signature,
-        confirmationErr: JSON.stringify(confirmation.value.err)
+        confirmationErr: confirmation.value.err ? JSON.stringify(confirmation.value.err) : undefined
       }
 
     })
