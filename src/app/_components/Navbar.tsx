@@ -16,11 +16,12 @@ export function Navbar() {
         >
           View Promises
         </Link>
-        <span
-          className="text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+        <Link
+          href="/how-it-works"
+          className="text-gray-600 hover:text-gray-900 transition-colors"
         >
           How it works
-        </span>
+        </Link>
       </div>
     </nav>
   );
