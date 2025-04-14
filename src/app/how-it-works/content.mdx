@@ -1,0 +1,43 @@
+# How Solana Promises Work
+
+## Self-Promise Smart Contract
+
+A Solana program that enables users to make commitments to themselves using SOL as promise amount
+
+The Solana program implements a unique concept of self-promises, where users can commit SOL to fulfill personal goals or commitments. Here's how it works:
+
+## Key Features
+
+### Making a Promise
+- Users lock a minimum of 0.01 SOL (10,000,000 lamports) as promise amount
+- Each promise has a unique identifier based on the creator's address, text, deadline, and size
+- A small fee (0.005 SOL) is paid to the program author for maintenance
+- The promise is stored in a Program Derived Address (PDA)
+
+### Fulfilling a Promise
+- Only the original creator can fulfill their promise
+- Must be fulfilled before the deadline
+- Upon fulfillment, the locked SOL is returned to the creator
+- The promise account is closed and its rent is refunded to the creator
+
+### Breaking a Promise
+- If the deadline passes without fulfillment, the promise can be broken
+- Only the program author can break promises after the deadline
+- The locked SOL is sent to the program author as a penalty
+- The promise account is closed and its rent is refunded to the creator
+
+## Technical Implementation
+
+The program uses several Solana concepts to ensure security and proper execution:
+
+- Program Derived Addresses (PDAs) to store promise data
+- Account validation using seeds derived from promise parameters
+- Native SOL transfers for promise amount and fees
+- Time-based validation using Solana's Clock sysvar
+- Proper account cleanup and rent refund on promise completion
+
+### Timing and Authorization Rules
+- Promise fulfillment is strictly time-gated: users can only fulfill their promise before the deadline
+- After the deadline passes, the promise can no longer be fulfilled by the creator
+- Only the program author has the authority to break promises after the deadline
+- These rules are enforced through on-chain time checks and strict authorization validation
