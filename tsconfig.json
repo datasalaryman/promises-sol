@@ -28,7 +28,7 @@
     "paths": {
       "@/*": ["./src/*"]
     }, 
-    "types": ["mocha", "chai"],
+    "types": ["mocha", "chai", "mdx"],
     "typeRoots": ["./node_modules/@types"]
   },
   "include": [
@@ -38,7 +38,8 @@
     "**/*.tsx",
     "**/*.cjs",
     "**/*.js",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "**/*.mdx",
   ],
   "exclude": ["node_modules", "migrations/**", "programs/**", "tests/**", ".mocharc.json", "Anchor.toml", "Cargo.lock", "Cargo.toml"]
 }
