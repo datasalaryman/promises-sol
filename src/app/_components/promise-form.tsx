@@ -153,6 +153,7 @@ export const PromiseForm = () => {
       toast({
         title: "Transaction signed",
         description: `Transaction signed by ${publicKey?.toString()}`,
+        className: "bg-white",
       });
 
       const serialTx = Array.from(signedTransaction.serialize());
@@ -166,6 +167,7 @@ export const PromiseForm = () => {
       toast({
         title: "Transaction sent",
         description: "Transaction sent to the network",
+        className: "bg-white",
       });
 
       if (confirmationErr) {
@@ -175,6 +177,7 @@ export const PromiseForm = () => {
       toast({
         title: "Confirmed Transaction",
         description: "You successfully made a promise",
+        className: "bg-white",
         action: (
           <ToastAction altText="View here" asChild>
             <a href={"https://solscan.io/tx/" + txSig} target="_blank">
@@ -204,6 +207,7 @@ export const PromiseForm = () => {
           variant: "destructive",
           title: "TRPC Client Error",
           description: `${JSON.stringify(err.shape)}`,
+          className: "bg-red-500",
         });
         await makeRefetch()
       } else if (err instanceof Error) {
@@ -211,6 +215,7 @@ export const PromiseForm = () => {
           variant: "destructive",
           title: "Unsuccessful transaction",
           description: `Transaction failed ${err.message}`,
+          className: "bg-red-500",
         });
         await makeRefetch()
       }

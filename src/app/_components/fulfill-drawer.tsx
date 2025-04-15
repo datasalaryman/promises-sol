@@ -56,6 +56,7 @@ const handlePromiseRelease = async (id: number) => {
   toast({
     title: "Transaction signed",
     description: `Transaction signed by ${publicKey?.toString()}`,
+    className: "bg-white",
   });
 
   const serialTx = Array.from(signedTransaction.serialize());
@@ -69,6 +70,7 @@ const handlePromiseRelease = async (id: number) => {
   toast({
     title: "Transaction sent",
     description: "Transaction sent to the network",
+    className: "bg-white",
   });
 
   if (confirmationErr) {
@@ -78,6 +80,7 @@ const handlePromiseRelease = async (id: number) => {
   toast({
     title: "Confirmed Transaction",
     description: "You successfully made a promise",
+    className: "bg-white",
     action: (
       <ToastAction altText="View here" asChild>
         <a href={"https://solscan.io/tx/" + txSig} target="_blank">
