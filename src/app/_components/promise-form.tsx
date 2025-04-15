@@ -90,7 +90,7 @@ export const PromiseForm = () => {
     const currentDateMills =
       Math.floor(epochSeconds / (60 * 60 * 24)) * 24 * 60 * 60 * 1000;
 
-    return DateTime.fromMillis(currentDateMills);
+    return DateTime.fromMillis(currentDateMills).setZone("utc");
   };
 
   const epochToHourOnly = (epochSeconds: number): number => {
@@ -275,7 +275,12 @@ export const PromiseForm = () => {
                         mode="single"
                         selected={epochToDateOnly(epochTime).toJSDate()}
                         onSelect={setEpochDate}
-                        initialFocus
+                        disabled={{before: DateTime.now().setZone("utc").toJSDate()}}
+                        initialFocus={true}
+                        defaultMonth={epochToDateOnly(epochTime).toJSDate()}
+                        modifiersClassNames={{
+                          selected: "bg-black text-white hover:bg-slate-700 hover:text-white"
+                        }}
                       />
                     </PopoverContent>
                   </Popover>
