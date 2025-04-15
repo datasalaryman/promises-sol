@@ -54,7 +54,7 @@ const WalletDisconnectButtonDynamic = dynamic(
 );
 
 export const PromiseForm = () => {
-  const renderDate = DateTime.now().setZone("utc");
+  const renderDate = DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 });
   const [promiseContent, setPromiseContent] = useState("");
   const [promiseLamports, setPromiseLamports] = useState(10000000);
   const connection = new anchor.web3.Connection(
@@ -326,9 +326,9 @@ export const PromiseForm = () => {
                   </div>
                 </div>
               </div>
+              <br/>
               <p className="text-sm text-muted-foreground">
-                Note: Date and time in 24H format will be recorded in UTC
-                timezone
+                Your promise will expire at {DateTime.fromMillis(epochTime * 1000).setZone("utc").toLocaleString(DateTime.DATETIME_FULL)}
               </p>
             </div>
 

@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { trpc } from "@/trpc/vanilla";
 import { ToastAction } from "@/components/ui/toast";
 import { useState } from "react";
+import { DateTime } from "luxon";
 
 type FulfillDrawerProps = {
   id: number;
@@ -103,7 +104,7 @@ const handlePromiseRelease = async (id: number) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-8">
-              <strong>Expires</strong>: {promiseEpoch}{" "}
+              <strong>Expires</strong>: {DateTime.fromMillis(parseInt(promiseEpoch ?? "0") * 1000).setZone("utc").toLocaleString(DateTime.DATETIME_FULL)}
               <br />
               <strong>Size</strong>:{" "}
               {parseInt(
@@ -133,7 +134,7 @@ const handlePromiseRelease = async (id: number) => {
                   {promiseContent}
                 </Drawer.Title>
                 <div>
-                  <strong>Expires: </strong> {promiseEpoch}
+                  <strong>Expires: </strong> {DateTime.fromMillis(parseInt(promiseEpoch ?? "0") * 1000).setZone("utc").toLocaleString(DateTime.DATETIME_FULL)}
                 </div>
                 <div>
                   <strong>Size: </strong>{" "}
@@ -148,7 +149,7 @@ const handlePromiseRelease = async (id: number) => {
             </div>
             <Drawer.Close asChild>
               <Button
-                type="submit" 
+                type="submit"
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-md"
                 onClick={async () =>
                   await handlePromiseRelease(id)
