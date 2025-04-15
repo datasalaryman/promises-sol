@@ -17,8 +17,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>
-        <Navbar />
-        <div className="pt-2">
+        <div className="flex flex-col gaps-2">
+          <Navbar />
           {children}
         </div>
         <Toaster />

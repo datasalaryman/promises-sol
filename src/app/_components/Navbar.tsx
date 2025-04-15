@@ -2,7 +2,8 @@ import Link from 'next/link';
 
 export function Navbar() {
   return (
-    <nav className="w-full py-3 px-6">
+    <header className="w-full py-3 px-6">
+    <nav>
       <div className="max-w-7xl mx-auto flex justify-center space-x-8">
         <Link
           href="/"
@@ -24,5 +25,7 @@ export function Navbar() {
         </Link>
       </div>
     </nav>
+    </header>
+
   );
 }
