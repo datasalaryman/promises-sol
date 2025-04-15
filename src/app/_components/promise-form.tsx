@@ -266,6 +266,7 @@ export const PromiseForm = () => {
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                       <Calendar
+                        className="bg-opacity-100 bg-white"
                         mode="single"
                         selected={epochToDateOnly(epochTime).toJSDate()}
                         onSelect={setEpochDate}
@@ -285,7 +286,7 @@ export const PromiseForm = () => {
                       <SelectTrigger>
                         <SelectValue placeholder="Hour" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-64 md:max-h-72">
+                      <SelectContent className="max-h-64 md:max-h-72 bg-white">
                         <SelectGroup>
                           {Array.from(Array(24).keys()).map((h) => (
                             <SelectItem key={h} value={h.toString()}>
@@ -300,7 +301,7 @@ export const PromiseForm = () => {
                       <SelectTrigger>
                         <SelectValue placeholder="Min" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-64 md:max-h-72">
+                      <SelectContent className="max-h-64 md:max-h-72 bg-white">
                         <SelectGroup>
                           {Array.from({ length: 12 }, (_, i) => i * 5).map(
                             (m) => (
@@ -343,7 +344,7 @@ export const PromiseForm = () => {
               </RadioGroup>
             </div>
 
-            <Button type="submit" className="w-full" disabled={!publicKey}>
+            <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-md" disabled={!publicKey}>
               {publicKey ? "Make Promise" : "Connect Wallet to Continue"}
             </Button>
           </form>
