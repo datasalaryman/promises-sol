@@ -1,43 +1,100 @@
-# How Solana Promises Work
+import Image from 'next/image';
 
-## Self-Promise Smart Contract
+# How SolPromises Work
 
-A Solana program that enables users to make commitments to themselves using SOL as promise amount
+Promises are an easy way to add stakes to your personal promises on-chain.
 
-The Solana program implements a unique concept of self-promises, where users can commit SOL to fulfill personal goals or commitments. Here's how it works:
+Users can make their promise by providing some text, some SOL, and a deadline in Unix seconds. All this information, and the SOL is stored in a program-derived address (PDA).
 
-## Key Features
+<div className="flex flex-row justify-center max-w-full">
+  <Image 
+    src="/make.png"
+    width={500}
+    height={500}
+    alt="Picture of a promise being made"
+  />
+</div>
+
+Users can then fulfill their promises before the deadline they set. They get back the SOL they put in and they also close the PDA.
+
+<div className="flex flex-row justify-center max-w-full">
+  <Image 
+    src="/fulfill.png"
+    width={500}
+    height={500}
+    alt="Picture of a promise being made"
+  />
+</div>
+
+If the user is unable to fulfill the promise before the deadline, the PDA and the SOL are locked.
+
+<div className="flex flex-row justify-center max-w-full">
+  <Image 
+    src="/locked.png"
+    width={400}
+    height={300}
+    alt="Picture of a promise being made"
+  />
+</div>
+
+In order to close the PDA and give back the rent, promises are broken by the program author (me).
+
+<div className="flex flex-row justify-center max-w-full">
+  <Image 
+    src="/broken.png"
+    width={500}
+    height={500}
+    alt="Picture of a promise being made"
+  />
+</div>
+
+## Promise structure
+
+The structure of a promise is composed of the address of the PDA itself, the account data of the PDA and the lamports (SOL) sent to the account when the make instruction is called. The derived address' seeds are:
+- an arbitrary string - `b"selfpromise"` in this case
+- the signer public key
+- the promise text
+- the deadline (in unix seconds)
+- size - how many lamports is sent to the promise
+
+This ensures that promise PDAs are truly unique identifiers. This also ensures that only the creator can fulfill their promise. 
+
+<div className="flex flex-row justify-center max-w-full">
+  <Image 
+    src="/structure.png"
+    width={500}
+    height={500}
+    alt="Picture of a promise being made"
+  />
+</div>
+
+## Enforcing time and who can call
+
+The Solana program enforces time constraints on when the fulfill and break promise instructions are called. Furthermore, only the creator of the Promise can fulfill it and only the program author can break a promise. 
+
+<div className="flex flex-row justify-center max-w-full">
+  <Image 
+    src="/time.png"
+    width={600}
+    height={500}
+    alt="Picture of a promise being made"
+  />
+</div>
+
+## Some notes on the promise instructions
 
 ### Making a Promise
-- Users lock a minimum of 0.01 SOL (10,000,000 lamports) as promise amount
-- Each promise has a unique identifier based on the creator's address, text, deadline, and size
+- Users lock a minimum of 0.01 SOL as promise amount
 - A small fee (0.005 SOL) is paid to the program author for maintenance
-- The promise is stored in a Program Derived Address (PDA)
+- User pays the base transaction fee
 
 ### Fulfilling a Promise
-- Only the original creator can fulfill their promise
-- Must be fulfilled before the deadline
-- Upon fulfillment, the locked SOL is returned to the creator
+- Only the user can fulfill their promise
+- The program author cannot break a creator's promise
 - The promise account is closed and its rent is refunded to the creator
+- User pays transaction fees
 
 ### Breaking a Promise
-- If the deadline passes without fulfillment, the promise can be broken
-- Only the program author can break promises after the deadline
-- The locked SOL is sent to the program author as a penalty
-- The promise account is closed and its rent is refunded to the creator
-
-## Technical Implementation
-
-The program uses several Solana concepts to ensure security and proper execution:
-
-- Program Derived Addresses (PDAs) to store promise data
-- Account validation using seeds derived from promise parameters
-- Native SOL transfers for promise amount and fees
-- Time-based validation using Solana's Clock sysvar
-- Proper account cleanup and rent refund on promise completion
-
-### Timing and Authorization Rules
-- Promise fulfillment is strictly time-gated: users can only fulfill their promise before the deadline
-- After the deadline passes, the promise can no longer be fulfilled by the creator
-- Only the program author has the authority to break promises after the deadline
-- These rules are enforced through on-chain time checks and strict authorization validation
+- Only the program author (me) can break promises
+- The creator gets back the rent paid for the Promise PDA
+- Program author pays transaction fees
