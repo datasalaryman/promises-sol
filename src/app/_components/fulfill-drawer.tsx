@@ -148,6 +148,8 @@ const handlePromiseRelease = async (id: number) => {
             </div>
             <Drawer.Close asChild>
               <Button
+                type="submit" 
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-md"
                 onClick={async () =>
                   await handlePromiseRelease(id)
                 }
