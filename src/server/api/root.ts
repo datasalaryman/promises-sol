@@ -11,7 +11,7 @@ import { rpcRouter } from "@/server/api/routers/rpc";
 export const appRouter = createTRPCRouter({
   promise: promiseRouter,
   solana: solanaRouter,
-  rpc: rpcRouter
+  rpc: rpcRouter,
 });
 
 // export type definition of API

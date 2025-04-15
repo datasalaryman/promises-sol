@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>
-        <div className="flex flex-col gaps-2">
+        <div className="gaps-2 flex flex-col">
           <Navbar />
           {children}
         </div>
@@ -25,4 +25,4 @@ export default function RootLayout({
       </body>
     </html>
   );
-};
+}

@@ -32,9 +32,7 @@ import "@solana/wallet-adapter-react-ui/styles.css";
 import { api } from "@/trpc/react";
 import { trpc } from "@/trpc/vanilla";
 import Link from "next/link";
-import {
-  VersionedTransaction,
-} from "@solana/web3.js";
+import { VersionedTransaction } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
@@ -54,7 +52,9 @@ const WalletDisconnectButtonDynamic = dynamic(
 );
 
 export const PromiseForm = () => {
-  const renderDate = DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 });
+  const renderDate = DateTime.now()
+    .setZone("utc")
+    .set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 });
   const [promiseContent, setPromiseContent] = useState("");
   const [promiseLamports, setPromiseLamports] = useState(10000000);
   const connection = new anchor.web3.Connection(
@@ -67,24 +67,22 @@ export const PromiseForm = () => {
   );
   const { toast } = useToast();
 
-  const [txSigned, setTxSigned] = useState<number[] | undefined>(undefined)
+  const [txSigned, setTxSigned] = useState<number[] | undefined>(undefined);
 
-  const {
-    data: makeTx,
-    refetch: makeRefetch
-  } = api.solana.makePromiseGenerate.useQuery(
-    {
-      text: promiseContent,
-      deadline: epochTime,
-      // @ts-expect-error - will only fire query if publicKey is defined
-      signer: publicKey?.toString(),
-      size: promiseLamports,
-    },
-    {
-      enabled: !!publicKey && !!promiseContent,
-      // TODO: refetch every 30 seconds
-    },
-  );
+  const { data: makeTx, refetch: makeRefetch } =
+    api.solana.makePromiseGenerate.useQuery(
+      {
+        text: promiseContent,
+        deadline: epochTime,
+        // @ts-expect-error - will only fire query if publicKey is defined
+        signer: publicKey?.toString(),
+        size: promiseLamports,
+      },
+      {
+        enabled: !!publicKey && !!promiseContent,
+        // TODO: refetch every 30 seconds
+      },
+    );
 
   const epochToDateOnly = (epochSeconds: number): DateTime => {
     const currentDateMills =
@@ -147,7 +145,9 @@ export const PromiseForm = () => {
     e.preventDefault();
 
     try {
-      const txDeserialized = VersionedTransaction.deserialize(new Uint8Array(makeTx.serialTx))
+      const txDeserialized = VersionedTransaction.deserialize(
+        new Uint8Array(makeTx.serialTx),
+      );
       const signedTransaction = await signTransaction!(txDeserialized);
 
       toast({
@@ -161,7 +161,7 @@ export const PromiseForm = () => {
       const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
         serialTx,
         blockhash: makeTx.blockhash,
-        blockheight: makeTx.blockheight
+        blockheight: makeTx.blockheight,
       });
 
       toast({
@@ -199,8 +199,7 @@ export const PromiseForm = () => {
       setPromiseLamports(10000000);
       setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60);
 
-      await makeRefetch()
-
+      await makeRefetch();
     } catch (err: unknown) {
       if (err instanceof TRPCClientError) {
         toast({
@@ -209,7 +208,7 @@ export const PromiseForm = () => {
           description: `${JSON.stringify(err.shape)}`,
           className: "bg-red-500",
         });
-        await makeRefetch()
+        await makeRefetch();
       } else if (err instanceof Error) {
         toast({
           variant: "destructive",
@@ -217,7 +216,7 @@ export const PromiseForm = () => {
           description: `Transaction failed ${err.message}`,
           className: "bg-red-500",
         });
-        await makeRefetch()
+        await makeRefetch();
       }
     }
   };
@@ -271,15 +270,18 @@ export const PromiseForm = () => {
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                       <Calendar
-                        className="bg-opacity-100 bg-white"
+                        className="bg-white bg-opacity-100"
                         mode="single"
                         selected={epochToDateOnly(epochTime).toJSDate()}
                         onSelect={setEpochDate}
-                        disabled={{before: DateTime.now().setZone("utc").toJSDate()}}
+                        disabled={{
+                          before: DateTime.now().setZone("utc").toJSDate(),
+                        }}
                         initialFocus={true}
                         defaultMonth={epochToDateOnly(epochTime).toJSDate()}
                         modifiersClassNames={{
-                          selected: "bg-black text-white hover:bg-slate-700 hover:text-white"
+                          selected:
+                            "bg-black text-white hover:bg-slate-700 hover:text-white",
                         }}
                       />
                     </PopoverContent>
@@ -296,7 +298,7 @@ export const PromiseForm = () => {
                       <SelectTrigger>
                         <SelectValue placeholder="Hour" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-64 md:max-h-72 bg-white">
+                      <SelectContent className="max-h-64 bg-white md:max-h-72">
                         <SelectGroup>
                           {Array.from(Array(24).keys()).map((h) => (
                             <SelectItem key={h} value={h.toString()}>
@@ -311,7 +313,7 @@ export const PromiseForm = () => {
                       <SelectTrigger>
                         <SelectValue placeholder="Min" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-64 md:max-h-72 bg-white">
+                      <SelectContent className="max-h-64 bg-white md:max-h-72">
                         <SelectGroup>
                           {Array.from({ length: 12 }, (_, i) => i * 5).map(
                             (m) => (
@@ -326,9 +328,12 @@ export const PromiseForm = () => {
                   </div>
                 </div>
               </div>
-              <br/>
+              <br />
               <p className="text-sm text-muted-foreground">
-                Your promise will expire at {DateTime.fromMillis(epochTime * 1000).setZone("utc").toLocaleString(DateTime.DATETIME_FULL)}
+                Your promise will expire at{" "}
+                {DateTime.fromMillis(epochTime * 1000)
+                  .setZone("utc")
+                  .toLocaleString(DateTime.DATETIME_FULL)}
               </p>
             </div>
 
@@ -354,7 +359,11 @@ export const PromiseForm = () => {
               </RadioGroup>
             </div>
 
-            <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-md" disabled={!publicKey}>
+            <Button
+              type="submit"
+              className="w-full rounded-md bg-slate-900 text-white hover:bg-slate-800"
+              disabled={!publicKey}
+            >
               {publicKey ? "Make Promise" : "Connect Wallet to Continue"}
             </Button>
           </form>

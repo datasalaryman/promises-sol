@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import Image from "next/image";
 
 # How SolPromises Work
 
@@ -6,8 +6,8 @@ SolPromises are an easy way to add stakes to your personal promises on-chain.
 
 Users can make their promise by providing some text, some SOL, and a deadline in Unix seconds. All this information, together with the SOL is stored in a program-derived address (PDA).
 
-<div className="flex flex-row justify-center max-w-full">
-  <Image 
+<div className="flex max-w-full flex-row justify-center">
+  <Image
     src="/make.png"
     width={500}
     height={500}
@@ -17,8 +17,8 @@ Users can make their promise by providing some text, some SOL, and a deadline in
 
 Users can then fulfill their promises before the deadline they set. They get back the SOL they put in and they also close the PDA.
 
-<div className="flex flex-row justify-center max-w-full">
-  <Image 
+<div className="flex max-w-full flex-row justify-center">
+  <Image
     src="/fulfill.png"
     width={500}
     height={500}
@@ -28,8 +28,8 @@ Users can then fulfill their promises before the deadline they set. They get bac
 
 If the user is unable to fulfill the promise before the deadline, the PDA and the SOL are locked.
 
-<div className="flex flex-row justify-center max-w-full">
-  <Image 
+<div className="flex max-w-full flex-row justify-center">
+  <Image
     src="/locked.png"
     width={400}
     height={300}
@@ -39,8 +39,8 @@ If the user is unable to fulfill the promise before the deadline, the PDA and th
 
 In order to close the PDA and give back the rent, promises are broken by the program author (me).
 
-<div className="flex flex-row justify-center max-w-full">
-  <Image 
+<div className="flex max-w-full flex-row justify-center">
+  <Image
     src="/broken.png"
     width={500}
     height={500}
@@ -51,16 +51,17 @@ In order to close the PDA and give back the rent, promises are broken by the pro
 ## Promise structure
 
 The structure of a promise is composed of the address of the PDA itself, the account data of the PDA and the lamports (SOL) sent to the account when the make instruction is called. The derived address' seeds are:
+
 - an arbitrary string - `b"selfpromise"` in this case
 - the signer public key
 - the promise text
 - the deadline (in unix seconds)
 - size - how many lamports is sent to the promise
 
-This ensures that promise PDAs are truly unique identifiers. This also ensures that only the creator can fulfill their promise. 
+This ensures that promise PDAs are truly unique identifiers. This also ensures that only the creator can fulfill their promise.
 
-<div className="flex flex-row justify-center max-w-full">
-  <Image 
+<div className="flex max-w-full flex-row justify-center">
+  <Image
     src="/structure.png"
     width={500}
     height={500}
@@ -70,10 +71,10 @@ This ensures that promise PDAs are truly unique identifiers. This also ensures t
 
 ## Enforcing time and who can call
 
-The Solana program enforces time constraints on when the fulfill and break promise instructions are called. Furthermore, only the creator of the Promise can fulfill it and only the program author can break a promise. 
+The Solana program enforces time constraints on when the fulfill and break promise instructions are called. Furthermore, only the creator of the Promise can fulfill it and only the program author can break a promise.
 
-<div className="flex flex-row justify-center max-w-full">
-  <Image 
+<div className="flex max-w-full flex-row justify-center">
+  <Image
     src="/time.png"
     width={600}
     height={500}
@@ -84,17 +85,20 @@ The Solana program enforces time constraints on when the fulfill and break promi
 ## Some notes on the promise instructions
 
 ### Making a Promise
+
 - Users lock a minimum of 0.01 SOL as promise amount
 - A small fee (0.005 SOL) is paid to the program author for maintenance
 - User pays the base transaction fee
 
 ### Fulfilling a Promise
+
 - Only the user can fulfill their promise
 - The program author cannot break a creator's promise
 - The promise account is closed and its rent is refunded to the creator
 - User pays transaction fees
 
 ### Breaking a Promise
+
 - Only the program author (me) can break promises
 - The creator gets back the rent paid for the Promise PDA
 - Program author pays transaction fees

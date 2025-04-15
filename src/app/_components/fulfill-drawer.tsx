@@ -20,98 +20,98 @@ type FulfillDrawerProps = {
   promiseLamports: bigint | null;
 };
 
-
 export const FulfillDrawer = ({
   id,
   promiseContent,
   promiseEpoch,
   promiseLamports,
 }: FulfillDrawerProps) => {
+  const { publicKey, signTransaction } = useWallet();
+  const [isOpen, setIsOpen] = useState(false);
 
-const { publicKey, signTransaction } = useWallet();
-const [isOpen, setIsOpen] = useState(false);
+  const releasePromise = api.promise.release.useMutation();
 
+  const { data: fulfillTx, refetch: fulfillRefetch } =
+    api.solana.fulfillPromiseGenerate.useQuery(
+      {
+        text: promiseContent,
+        // @ts-expect-error - will only fire query if publicKey is defined
+        signer: publicKey?.toString(),
+        deadline: parseInt(promiseEpoch),
+        size: parseInt(promiseLamports?.toString() ?? "0"),
+      },
+      {
+        enabled: !!publicKey && isOpen,
+        // TODO: refetch every 30 seconds
+      },
+    );
 
-const releasePromise = api.promise.release.useMutation();
+  const handlePromiseRelease = async (id: number) => {
+    const txDeserialized = VersionedTransaction.deserialize(
+      new Uint8Array(fulfillTx.serialTx),
+    );
+    const signedTransaction = await signTransaction!(txDeserialized);
 
-const {
-  data: fulfillTx,
-  refetch: fulfillRefetch
-} = api.solana.fulfillPromiseGenerate.useQuery(
-{
-  text: promiseContent,
-  // @ts-expect-error - will only fire query if publicKey is defined
-  signer: publicKey?.toString(),
-  deadline: parseInt(promiseEpoch),
-  size: parseInt(promiseLamports?.toString() ?? "0"),
-}, {
-  enabled: !!publicKey && isOpen,
-  // TODO: refetch every 30 seconds
-},
-);
+    toast({
+      title: "Transaction signed",
+      description: `Transaction signed by ${publicKey?.toString()}`,
+      className: "bg-white",
+    });
 
-const handlePromiseRelease = async (id: number) => {
-  const txDeserialized = VersionedTransaction.deserialize(new Uint8Array(fulfillTx.serialTx))
-  const signedTransaction = await signTransaction!(txDeserialized);
+    const serialTx = Array.from(signedTransaction.serialize());
 
-  toast({
-    title: "Transaction signed",
-    description: `Transaction signed by ${publicKey?.toString()}`,
-    className: "bg-white",
-  });
+    const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
+      serialTx,
+      blockhash: fulfillTx.blockhash,
+      blockheight: fulfillTx.blockheight,
+    });
 
-  const serialTx = Array.from(signedTransaction.serialize());
+    toast({
+      title: "Transaction sent",
+      description: "Transaction sent to the network",
+      className: "bg-white",
+    });
 
-  const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
-    serialTx,
-    blockhash: fulfillTx.blockhash,
-    blockheight: fulfillTx.blockheight
-  });
+    if (confirmationErr) {
+      throw new Error(`Transaction confirmation error: ${confirmationErr}`);
+    }
 
-  toast({
-    title: "Transaction sent",
-    description: "Transaction sent to the network",
-    className: "bg-white",
-  });
-
-  if (confirmationErr) {
-    throw new Error(`Transaction confirmation error: ${confirmationErr}`);
-  }
-
-  toast({
-    title: "Confirmed Transaction",
-    description: "You successfully made a promise",
-    className: "bg-white",
-    action: (
-      <ToastAction altText="View here" asChild>
-        <a href={"https://solscan.io/tx/" + txSig} target="_blank">
-          View here
-        </a>
-      </ToastAction>
-    ),
-  });
-  releasePromise.mutate({ id: id });
-};
+    toast({
+      title: "Confirmed Transaction",
+      description: "You successfully made a promise",
+      className: "bg-white",
+      action: (
+        <ToastAction altText="View here" asChild>
+          <a href={"https://solscan.io/tx/" + txSig} target="_blank">
+            View here
+          </a>
+        </ToastAction>
+      ),
+    });
+    releasePromise.mutate({ id: id });
+  };
 
   return (
-    <Drawer.Root key={id} direction="right" open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
+    <Drawer.Root
+      key={id}
+      direction="right"
+      open={isOpen}
+      onOpenChange={(open) => setIsOpen(open)}
+    >
       <Drawer.Trigger asChild>
         <div className="pb-2 pr-2">
           <Card className="h-40 w-80 hover:border-black">
             <CardHeader>
-              <CardTitle className="truncate">
-                {promiseContent}
-              </CardTitle>
+              <CardTitle className="truncate">{promiseContent}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-8">
-              <strong>Expires</strong>: {DateTime.fromMillis(parseInt(promiseEpoch ?? "0") * 1000).setZone("utc").toLocaleString(DateTime.DATETIME_FULL)}
+              <strong>Expires</strong>:{" "}
+              {DateTime.fromMillis(parseInt(promiseEpoch ?? "0") * 1000)
+                .setZone("utc")
+                .toLocaleString(DateTime.DATETIME_FULL)}
               <br />
               <strong>Size</strong>:{" "}
-              {parseInt(
-                promiseLamports?.toString() ?? "0",
-              ) /
-                10 ** 9}{" "}
-              SOL
+              {parseInt(promiseLamports?.toString() ?? "0") / 10 ** 9} SOL
             </CardContent>
           </Card>
         </div>
@@ -134,15 +134,14 @@ const handlePromiseRelease = async (id: number) => {
                   {promiseContent}
                 </Drawer.Title>
                 <div>
-                  <strong>Expires: </strong> {DateTime.fromMillis(parseInt(promiseEpoch ?? "0") * 1000).setZone("utc").toLocaleString(DateTime.DATETIME_FULL)}
+                  <strong>Expires: </strong>{" "}
+                  {DateTime.fromMillis(parseInt(promiseEpoch ?? "0") * 1000)
+                    .setZone("utc")
+                    .toLocaleString(DateTime.DATETIME_FULL)}
                 </div>
                 <div>
                   <strong>Size: </strong>{" "}
-                  {parseInt(
-                    promiseLamports?.toString() ?? "0",
-                  ) /
-                    10 ** 9}{" "}
-                  SOL
+                  {parseInt(promiseLamports?.toString() ?? "0") / 10 ** 9} SOL
                 </div>
               </div>
               <Drawer.Description />
@@ -150,10 +149,8 @@ const handlePromiseRelease = async (id: number) => {
             <Drawer.Close asChild>
               <Button
                 type="submit"
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-md"
-                onClick={async () =>
-                  await handlePromiseRelease(id)
-                }
+                className="w-full rounded-md bg-slate-900 text-white hover:bg-slate-800"
+                onClick={async () => await handlePromiseRelease(id)}
               >
                 Release Promise
               </Button>
@@ -162,5 +159,5 @@ const handlePromiseRelease = async (id: number) => {
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>
-  )
-}
+  );
+};

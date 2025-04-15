@@ -104,7 +104,7 @@ export const PromisesView = () => {
                   key={promise.id}
                   id={promise.id}
                   promiseContent={promise.promiseContent ?? ""}
-                  promiseEpoch={promise.promiseEpoch?.toString() ?? ""  }
+                  promiseEpoch={promise.promiseEpoch?.toString() ?? ""}
                   promiseLamports={promise.promiseLamports ?? 0n}
                 />
               );

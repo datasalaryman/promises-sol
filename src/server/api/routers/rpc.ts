@@ -8,17 +8,20 @@ const connection = new Connection(env.RPC_URL, "confirmed");
 
 export const rpcRouter = createTRPCRouter({
   sendAndConfirm: publicProcedure
-    .input(z.object({
-      serialTx: z.number().array(),
-      blockhash: z.string(),
-      blockheight: z.number()
-    }))
-    .output(z.object({
-      txSig: z.string(),
-      confirmationErr: z.string().nullish()
-    }))
-    .query( async ({ctx, input}) => {
-
+    .input(
+      z.object({
+        serialTx: z.number().array(),
+        blockhash: z.string(),
+        blockheight: z.number(),
+      }),
+    )
+    .output(
+      z.object({
+        txSig: z.string(),
+        confirmationErr: z.string().nullish(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
       const signature = await connection.sendTransaction(
         VersionedTransaction.deserialize(new Uint8Array(input.serialTx)),
         { maxRetries: 0 },
@@ -32,8 +35,9 @@ export const rpcRouter = createTRPCRouter({
 
       return {
         txSig: signature,
-        confirmationErr: confirmation.value.err ? JSON.stringify(confirmation.value.err) : undefined
-      }
-
-    })
-})
+        confirmationErr: confirmation.value.err
+          ? JSON.stringify(confirmation.value.err)
+          : undefined,
+      };
+    }),
+});

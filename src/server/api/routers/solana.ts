@@ -60,11 +60,10 @@ export const solanaRouter = createTRPCRouter({
       const blockHeightCacheKey = `${CACHE_KEY_PREFIX}blockheight`;
 
       // Try to get cached values
-      const [cachedBlockhash, cachedBlockHeight] =
-        await Promise.all([
-          redis.get<string>(blockhashCacheKey),
-          redis.get<number>(blockHeightCacheKey),
-        ]);
+      const [cachedBlockhash, cachedBlockHeight] = await Promise.all([
+        redis.get<string>(blockhashCacheKey),
+        redis.get<number>(blockHeightCacheKey),
+      ]);
 
       let blockhash: string;
       let lastValidBlockHeight: number;
@@ -154,11 +153,10 @@ export const solanaRouter = createTRPCRouter({
       const blockHeightCacheKey = `${CACHE_KEY_PREFIX}blockheight`;
 
       // Try to get cached values
-      const [cachedBlockhash, cachedBlockHeight] =
-        await Promise.all([
-          redis.get<string>(blockhashCacheKey),
-          redis.get<number>(blockHeightCacheKey),
-        ]);
+      const [cachedBlockhash, cachedBlockHeight] = await Promise.all([
+        redis.get<string>(blockhashCacheKey),
+        redis.get<number>(blockHeightCacheKey),
+      ]);
 
       let blockhash: string;
       let lastValidBlockHeight: number;
