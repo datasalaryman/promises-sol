@@ -8,11 +8,17 @@ import { createHash } from "crypto";
 import { BN } from "bn.js";
 import { type Promisesprimitive } from "@/types/promisesprimitive";
 import { env } from "@/env";
+import { Redis } from "@upstash/redis";
 
 const connection = new Connection(env.RPC_URL, "confirmed");
 
 const program = new anchor.Program<Promisesprimitive>(idl, {
   connection,
+});
+
+const redis = new Redis({
+  url: env.UPSTASH_REDIS_REST_URL,
+  token: env.UPSTASH_REDIS_REST_TOKEN,
 });
 
 export const solanaRouter = createTRPCRouter({
@@ -48,9 +54,45 @@ export const solanaRouter = createTRPCRouter({
 
       const instructions = [makeIx];
 
-      // TODO: add caching here
-      const { blockhash, lastValidBlockHeight } =
-        await connection.getLatestBlockhash("confirmed");
+      // Implement caching for blockhash, lastValidBlockHeight, and blocktime
+      const CACHE_KEY_PREFIX = "solana:blockinfo:";
+      const blockhashCacheKey = `${CACHE_KEY_PREFIX}blockhash`;
+      const blockHeightCacheKey = `${CACHE_KEY_PREFIX}blockheight`;
+
+      // Try to get cached values
+      const [cachedBlockhash, cachedBlockHeight] =
+        await Promise.all([
+          redis.get<string>(blockhashCacheKey),
+          redis.get<number>(blockHeightCacheKey),
+        ]);
+
+      let blockhash: string;
+      let lastValidBlockHeight: number;
+
+      // If we have all cached values, use them
+      if (cachedBlockhash && cachedBlockHeight) {
+        blockhash = cachedBlockhash;
+        lastValidBlockHeight = cachedBlockHeight;
+        console.log("Using cached block info");
+      } else {
+        // Fetch fresh values from Solana
+        const blockInfo = await connection.getLatestBlockhash("confirmed");
+        blockhash = blockInfo.blockhash;
+        lastValidBlockHeight = blockInfo.lastValidBlockHeight;
+
+        // Cache the values with expiration based on blocktime
+        // Set expiration to 2 minutes (120 seconds) from the blocktime
+        const expirationTime = 45; // 2 minutes in seconds
+
+        await Promise.all([
+          redis.set(blockhashCacheKey, blockhash, { ex: expirationTime }),
+          redis.set(blockHeightCacheKey, lastValidBlockHeight, {
+            ex: expirationTime,
+          }),
+        ]);
+
+        console.log("Fetched and cached new block info");
+      }
 
       console.log(
         `blockhash: ${blockhash}, blockheight: ${lastValidBlockHeight}`,
@@ -106,9 +148,46 @@ export const solanaRouter = createTRPCRouter({
 
       const instructions = [fulfillIx];
 
-      // TODO: add caching here
-      const { blockhash, lastValidBlockHeight } =
-        await connection.getLatestBlockhash("confirmed");
+      // Implement caching for blockhash, lastValidBlockHeight, and blocktime
+      const CACHE_KEY_PREFIX = "solana:blockinfo:";
+      const blockhashCacheKey = `${CACHE_KEY_PREFIX}blockhash`;
+      const blockHeightCacheKey = `${CACHE_KEY_PREFIX}blockheight`;
+
+      // Try to get cached values
+      const [cachedBlockhash, cachedBlockHeight] =
+        await Promise.all([
+          redis.get<string>(blockhashCacheKey),
+          redis.get<number>(blockHeightCacheKey),
+        ]);
+
+      let blockhash: string;
+      let lastValidBlockHeight: number;
+      let blocktime: number | null;
+
+      // If we have all cached values, use them
+      if (cachedBlockhash && cachedBlockHeight) {
+        blockhash = cachedBlockhash;
+        lastValidBlockHeight = cachedBlockHeight;
+        console.log("Using cached block info");
+      } else {
+        // Fetch fresh values from Solana
+        const blockInfo = await connection.getLatestBlockhash("confirmed");
+        blockhash = blockInfo.blockhash;
+        lastValidBlockHeight = blockInfo.lastValidBlockHeight;
+
+        // Cache the values with expiration based on blocktime
+        // Set expiration to 2 minutes (120 seconds) from the blocktime
+        const expirationTime = 45; // 2 minutes in seconds
+
+        await Promise.all([
+          redis.set(blockhashCacheKey, blockhash, { ex: expirationTime }),
+          redis.set(blockHeightCacheKey, lastValidBlockHeight, {
+            ex: expirationTime,
+          }),
+        ]);
+
+        console.log("Fetched and cached new block info");
+      }
 
       console.log(
         `blockhash: ${blockhash}, blockheight: ${lastValidBlockHeight}`,
