@@ -275,7 +275,7 @@ export const PromiseForm = () => {
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                       <Calendar
-                        className="bg-white bg-opacity-100"
+                        className="bg-white"
                         mode="single"
                         selected={epochToDateOnly(epochTime).toJSDate()}
                         onSelect={setEpochDate}
