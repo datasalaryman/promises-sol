@@ -225,7 +225,7 @@ export const PromiseForm = () => {
     <div className="min-h-fit max-w-md py-5">
       <Card>
         <CardHeader>
-          <CardTitle>Make a Promise</CardTitle>
+          <CardTitle>Make a <Link href="/how-it-works" className="underline">Promise</Link></CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 p-4 pt-0">
           {publicKey ? (

@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 # How SolPromises Work
 
@@ -46,6 +48,15 @@ In order to close the PDA and give back the rent, promises are broken by the pro
     height={500}
     alt="Picture of a promise being made"
   />
+</div>
+
+<div className="flex flex-col items-center">
+  <p>Try it out:</p>
+  <Button variant="outline" className="bg-black text-white" asChild>
+    <Link href="/">
+      Make a Promise
+    </Link>
+  </Button>
 </div>
 
 ## Promise structure
