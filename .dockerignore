@@ -6,3 +6,6 @@ tests/**
 Anchor.toml
 Cargo.lock
 Cargo.toml
+
+# webapp specific files
+src/app/sandbox/**

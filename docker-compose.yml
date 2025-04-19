@@ -1,4 +1,63 @@
-# TODO: docker compose file for 
-#   - nextjs deployment, 
-#   - solana-test-validator,
-#   - mysql 
+version: "3.8"
+
+services:
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=mysql://root:root@mysql:3306/promises
+      - REDIS_URL=redis://redis:6379
+      - SOLANA_RPC_URL=http://solana-test-validator:8899
+    depends_on:
+      - mysql
+      - redis
+      - solana-test-validator
+    networks:
+      - app-network
+    command: bun run dev
+
+  solana-test-validator:
+    image: ghcr.io/beeman/solana-test-validator:latest
+    ports:
+      - "8899:8899"
+      - "8900:8900"
+    command: solana-test-validator --reset
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=promises
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
