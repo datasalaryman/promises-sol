@@ -34,8 +34,6 @@
     "@radix-ui/react-slot": "^1.1.2",
     "@radix-ui/react-toast": "^1.2.6",
     "@solana-developers/helpers": "^2.8.1",
-    "@solana-mobile/mobile-wallet-adapter-protocol": "2.1.5",
-    "@solana-mobile/mobile-wallet-adapter-protocol-web3js": "2.1.5",
     "@solana/wallet-adapter-base": "^0.9.24",
     "@solana/wallet-adapter-react": "^0.15.37",
     "@solana/wallet-adapter-react-ui": "^0.9.37",
