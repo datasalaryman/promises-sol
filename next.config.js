@@ -10,6 +10,7 @@ const nextConfig = {
   // Configure `pageExtensions` to include markdown and MDX files
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   // Optionally, add any other Next.js config below
+  allowedDevOrigins: ['nextjs.promises-sol.orb.local', 'localhost', '127.0.0.1'],
 };
 
 const withMDX = createMDX({

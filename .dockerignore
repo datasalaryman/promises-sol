@@ -8,4 +8,10 @@ Cargo.lock
 Cargo.toml
 
 # webapp specific files
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.next
+.git
 src/app/sandbox/**

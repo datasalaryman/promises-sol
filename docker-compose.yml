@@ -5,25 +5,39 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - DATABASE_URL=mysql://singleuser:singlepassword@mysql:3306/mysql
+        - REDIS_URL=redis://redis:6379
+        - RPC_URL=http://solana-test-validator:8899
+        - NEXT_PUBLIC_CLIENTVAR=jwdKwUo0FG11oQ3fRYxijZRHVY7Sq2VC
     ports:
       - "3000:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
     environment:
-      - NODE_ENV=development
-      - DATABASE_URL=mysql://root:root@mysql:3306/promises
-      - REDIS_URL=redis://redis:6379
-      - SOLANA_RPC_URL=http://solana-test-validator:8899
+      - HOSTNAME=0.0.0.0
     depends_on:
       - mysql
       - redis
       - solana-test-validator
     networks:
       - app-network
-    command: bun run dev
-
+    command: bun run dev:ui
+    develop:
+      watch:
+        - action: sync
+          path: src
+          target: /app/src
+        - action: rebuild
+          path: "package.json"
+          target: /app/package.json
+        - action: rebuild
+          path: "tsconfig.json"
+          target: /app/tsconfig.json
+        - action: rebuild
+          path: "next.config.js"
+          target: /app/next.config.js
+        - action: rebuild
+          path: "Dockerfile"
+          target: /app/Dockerfile
   solana-test-validator:
     image: ghcr.io/beeman/solana-test-validator:latest
     ports:
@@ -39,7 +53,9 @@ services:
       - "3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=promises
+      - MYSQL_DATABASE=mysql
+      - MYSQL_USER=singleuser
+      - MYSQL_PASSWORD=singlepassword
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
