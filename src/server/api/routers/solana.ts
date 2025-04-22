@@ -8,7 +8,7 @@ import { createHash } from "crypto";
 import { BN } from "bn.js";
 import { type Promisesprimitive } from "@/types/promisesprimitive";
 import { env } from "@/env";
-import { Redis } from "@upstash/redis";
+import Redis from "ioredis";
 
 const connection = new Connection(env.RPC_URL, "confirmed");
 
@@ -16,10 +16,7 @@ const program = new anchor.Program<Promisesprimitive>(idl, {
   connection,
 });
 
-const redis = new Redis({
-  url: env.UPSTASH_REDIS_REST_URL,
-  token: env.UPSTASH_REDIS_REST_TOKEN,
-});
+const redis = new Redis(env.REDIS_URL);
 
 export const solanaRouter = createTRPCRouter({
   makePromiseGenerate: publicProcedure
@@ -61,8 +58,8 @@ export const solanaRouter = createTRPCRouter({
 
       // Try to get cached values
       const [cachedBlockhash, cachedBlockHeight] = await Promise.all([
-        redis.get<string>(blockhashCacheKey),
-        redis.get<number>(blockHeightCacheKey),
+        redis.get(blockhashCacheKey),
+        redis.get(blockHeightCacheKey),
       ]);
 
       let blockhash: string;
@@ -71,7 +68,7 @@ export const solanaRouter = createTRPCRouter({
       // If we have all cached values, use them
       if (cachedBlockhash && cachedBlockHeight) {
         blockhash = cachedBlockhash;
-        lastValidBlockHeight = cachedBlockHeight;
+        lastValidBlockHeight = parseInt(cachedBlockHeight);
         console.log("Using cached block info");
       } else {
         // Fetch fresh values from Solana
@@ -84,10 +81,8 @@ export const solanaRouter = createTRPCRouter({
         const expirationTime = 45; // 2 minutes in seconds
 
         await Promise.all([
-          redis.set(blockhashCacheKey, blockhash, { ex: expirationTime }),
-          redis.set(blockHeightCacheKey, lastValidBlockHeight, {
-            ex: expirationTime,
-          }),
+          redis.set(blockhashCacheKey, blockhash, "EX", expirationTime),
+          redis.set(blockHeightCacheKey, lastValidBlockHeight, "EX", expirationTime),
         ]);
 
         console.log("Fetched and cached new block info");
@@ -154,8 +149,8 @@ export const solanaRouter = createTRPCRouter({
 
       // Try to get cached values
       const [cachedBlockhash, cachedBlockHeight] = await Promise.all([
-        redis.get<string>(blockhashCacheKey),
-        redis.get<number>(blockHeightCacheKey),
+        redis.get(blockhashCacheKey),
+        redis.get(blockHeightCacheKey),
       ]);
 
       let blockhash: string;
@@ -165,7 +160,7 @@ export const solanaRouter = createTRPCRouter({
       // If we have all cached values, use them
       if (cachedBlockhash && cachedBlockHeight) {
         blockhash = cachedBlockhash;
-        lastValidBlockHeight = cachedBlockHeight;
+        lastValidBlockHeight = parseInt(cachedBlockHeight);
         console.log("Using cached block info");
       } else {
         // Fetch fresh values from Solana
@@ -178,10 +173,13 @@ export const solanaRouter = createTRPCRouter({
         const expirationTime = 45; // 2 minutes in seconds
 
         await Promise.all([
-          redis.set(blockhashCacheKey, blockhash, { ex: expirationTime }),
-          redis.set(blockHeightCacheKey, lastValidBlockHeight, {
-            ex: expirationTime,
-          }),
+          redis.set(blockhashCacheKey, blockhash, "EX", expirationTime),
+          redis.set(
+            blockHeightCacheKey,
+            lastValidBlockHeight,
+            "EX",
+            expirationTime,
+          ),
         ]);
 
         console.log("Fetched and cached new block info");
