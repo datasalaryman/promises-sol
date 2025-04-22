@@ -57,10 +57,6 @@ export const PromiseForm = () => {
     .set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 });
   const [promiseContent, setPromiseContent] = useState("");
   const [promiseLamports, setPromiseLamports] = useState(10000000);
-  const connection = new anchor.web3.Connection(
-    env.NEXT_PUBLIC_RPC_URL,
-    "confirmed",
-  );
   const { publicKey, signTransaction } = useWallet();
   const [epochTime, setEpochTime] = useState<number>(
     Math.floor(renderDate.toMillis() / (1000 * 60)) * 60,
@@ -334,7 +330,7 @@ export const PromiseForm = () => {
                 </div>
               </div>
               <br />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground" suppressHydrationWarning>
                 Your promise will expire at{" "}
                 {DateTime.fromMillis(epochTime * 1000)
                   .setZone("utc")
