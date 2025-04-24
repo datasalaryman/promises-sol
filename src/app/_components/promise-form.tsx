@@ -135,7 +135,7 @@ export const PromiseForm = () => {
     }
   };
 
-  const createPromise = api.promise.create.useMutation();
+  const createPromise = api.promise.createSelf.useMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

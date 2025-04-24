@@ -30,7 +30,7 @@ export const PromisesView = () => {
     data: result,
     isLoading,
     isError,
-  } = api.promise.getAll.useQuery({ wallet: publicKey?.toString() ?? "" });
+  } = api.promise.getAllSelf.useQuery({ wallet: publicKey?.toString() ?? "" });
 
   if (isLoading) {
     return (

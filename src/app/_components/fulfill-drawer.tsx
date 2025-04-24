@@ -29,7 +29,7 @@ export const FulfillDrawer = ({
   const { publicKey, signTransaction } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
 
-  const releasePromise = api.promise.release.useMutation();
+  const releasePromise = api.promise.releaseSelf.useMutation();
 
   const { data: fulfillTx, refetch: fulfillRefetch } =
     api.solana.fulfillPromiseGenerate.useQuery(

@@ -5,7 +5,7 @@ import { promisesSelf } from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
 
 export const promiseRouter = createTRPCRouter({
-  create: publicProcedure
+  createSelf: publicProcedure
     .input(
       z.object({
         content: z.string(),
@@ -22,7 +22,7 @@ export const promiseRouter = createTRPCRouter({
         promiseWallet: input.wallet,
       });
     }),
-  release: publicProcedure
+  releaseSelf: publicProcedure
     .input(
       z.object({
         id: z.number(),
@@ -31,7 +31,7 @@ export const promiseRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await ctx.db.delete(promisesSelf).where(eq(promisesSelf.id, input.id));
     }),
-  getAll: publicProcedure
+  getAllSelf: publicProcedure
     .input(
       z.object({
         wallet: z.string(),
@@ -57,7 +57,7 @@ export const promiseRouter = createTRPCRouter({
       });
       return promises;
     }),
-  getOne: publicProcedure
+  getOneSelf: publicProcedure
     .input(
       z.object({
         id: z.number(),
