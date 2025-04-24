@@ -19,7 +19,7 @@ const program = new anchor.Program<Promisesprimitive>(idl, {
 const redis = new Redis(env.REDIS_URL);
 
 export const solanaRouter = createTRPCRouter({
-  makePromiseGenerate: publicProcedure
+  makeSelfPromiseGenerate: publicProcedure
     .input(
       z.object({
         signer: z.string(),
@@ -82,7 +82,12 @@ export const solanaRouter = createTRPCRouter({
 
         await Promise.all([
           redis.set(blockhashCacheKey, blockhash, "EX", expirationTime),
-          redis.set(blockHeightCacheKey, lastValidBlockHeight, "EX", expirationTime),
+          redis.set(
+            blockHeightCacheKey,
+            lastValidBlockHeight,
+            "EX",
+            expirationTime,
+          ),
         ]);
 
         console.log("Fetched and cached new block info");
@@ -106,7 +111,7 @@ export const solanaRouter = createTRPCRouter({
         blockheight: lastValidBlockHeight,
       };
     }),
-  fulfillPromiseGenerate: publicProcedure
+  fulfillSelfPromiseGenerate: publicProcedure
     .input(
       z.object({
         signer: z.string(),
@@ -203,7 +208,7 @@ export const solanaRouter = createTRPCRouter({
         blockheight: lastValidBlockHeight,
       };
     }),
-  breakPromiseGenerate: publicProcedure
+  breakSelfPromiseGenerate: publicProcedure
     .input(
       z.object({
         creator: z.string(),

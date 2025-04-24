@@ -32,7 +32,7 @@ export const FulfillDrawer = ({
   const releasePromise = api.promise.releaseSelf.useMutation();
 
   const { data: fulfillTx, refetch: fulfillRefetch } =
-    api.solana.fulfillPromiseGenerate.useQuery(
+    api.solana.fulfillSelfPromiseGenerate.useQuery(
       {
         text: promiseContent,
         // @ts-expect-error - will only fire query if publicKey is defined

@@ -66,7 +66,7 @@ export const PromiseForm = () => {
   const [txSigned, setTxSigned] = useState<number[] | undefined>(undefined);
 
   const { data: makeTx, refetch: makeRefetch } =
-    api.solana.makePromiseGenerate.useQuery(
+    api.solana.makeSelfPromiseGenerate.useQuery(
       {
         text: promiseContent,
         deadline: epochTime,
