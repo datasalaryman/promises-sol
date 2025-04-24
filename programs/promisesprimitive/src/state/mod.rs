@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+pub const AUTHOR: Pubkey = pubkey!("fTcVudr5vjBanSe9eYuX9HS3DuzjWKwavYBMbhLn2SJ");
+
 #[account]
 #[derive(Default)]
 pub struct PartnerPromise {
