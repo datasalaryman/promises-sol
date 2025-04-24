@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { promisesSelf } from "@/server/db/schema";
+import { promisesSelf, promisesPartner } from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
 
 export const promiseRouter = createTRPCRouter({
@@ -81,5 +81,88 @@ export const promiseRouter = createTRPCRouter({
         where: eq(promisesSelf.id, input.id),
       });
       return promise;
+    }),
+  createPartner: publicProcedure
+    .input(
+      z.object({
+        content: z.string(),
+        epoch: z.number(),
+        lamports: z.number(),
+        creatorWallet: z.string(),
+        partnerWallet: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.insert(promisesPartner).values({
+        promiseContent: input.content,
+        promiseEpoch: BigInt(input.epoch),
+        promiseLamports: BigInt(input.lamports),
+        creatorWallet: input.creatorWallet,
+        partnerWallet: input.partnerWallet,
+      });
+    }),
+  getAllPartner: publicProcedure
+    .input(
+      z.object({
+        wallet: z.string(),
+      }),
+    )
+    .output(
+      z
+        .object({
+          id: z.number(),
+          createdAt: z.date(),
+          updatedAt: z.date().nullable(),
+          promiseContent: z.string().nullable(),
+          promiseEpoch: z.bigint().nullable(),
+          promiseLamports: z.bigint().nullable(),
+          creatorWallet: z.string(),
+          partnerWallet: z.string(),
+        })
+        .array(),
+    )
+    .query(async ({ ctx, input }) => {
+      const promises = await ctx.db.query.promisesPartner.findMany({
+        where: eq(promisesPartner.creatorWallet, input.wallet),
+        orderBy: desc(promisesPartner.promiseEpoch),
+      });
+      return promises;
+    }),
+  getOnePartner: publicProcedure
+    .input(
+      z.object({
+        id: z.number(),
+      }),
+    )
+    .output(
+      z
+        .object({
+          id: z.number(),
+          createdAt: z.date(),
+          updatedAt: z.date().nullable(),
+          promiseContent: z.string().nullable(),
+          promiseEpoch: z.bigint().nullable(),
+          promiseLamports: z.bigint().nullable(),
+          creatorWallet: z.string(),
+          partnerWallet: z.string(),
+        })
+        .nullish(),
+    )
+    .query(async ({ ctx, input }) => {
+      const promise = await ctx.db.query.promisesPartner.findFirst({
+        where: eq(promisesPartner.id, input.id),
+      });
+      return promise;
+    }),
+  releasePartner: publicProcedure
+    .input(
+      z.object({
+        id: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(promisesPartner).where(
+        eq(promisesPartner.id, input.id),
+      );
     }),
 });
