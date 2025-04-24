@@ -39,8 +39,8 @@ before(async () => {
   });
 
   const otherAccountAirdop = await provider.connection.requestAirdrop(
-    newAccountKp.publicKey,
-    LAMPORTS_PER_SOL * 1.0
+    otherAccountKp.publicKey,
+    LAMPORTS_PER_SOL * 2.5
   );
 
   const otherAccountBlockHash = await provider.connection.getLatestBlockhash();
@@ -485,6 +485,379 @@ describe("promisesprimitive", async () => {
     }
 
     // await makeTxConfirmation();
+
+    chai.expect(makeTxConfirmation()).to.eventually
+      .be.rejectedWith("Simulation failed.")
+      .and.be.an.instanceOf(Error)
+  });
+
+  it("able to make partner promise", async () => {
+    const text = [126, 210, 132, 45, 145, 123, 53, 23] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
+    const size = new BN(50000000)
+
+    const makeIx = await program
+      .methods
+      .makePartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+        partner: otherAccountKp.publicKey,
+      })
+      .instruction();
+
+    const makeTxConfirmation = await sendVersionedTransaction(
+      provider.connection,
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
+    )
+
+    chai.assert(makeTxConfirmation, "making partner promise failed")
+  });
+
+  it("able to fulfill partner promise", async () => {
+    const text = [126, 81, 132, 53, 23, 111, 23, 23] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
+    const size = new BN(50000000)
+
+    const makeIx = await program
+      .methods
+      .makePartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+        partner: otherAccountKp.publicKey,
+      })
+      .instruction();
+
+    const makeTxConfirmation = await sendVersionedTransaction(
+      provider.connection,
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
+    )
+    chai.assert(makeTxConfirmation, "making partner promise failed")
+
+    const fulfillIx = await program
+      .methods
+      .fulfillPartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: otherAccountKp.publicKey,
+        creator: newAccountKp.publicKey,
+      })
+      .instruction();
+
+    const fulfillTxConfirmation = await sendVersionedTransaction(
+      provider.connection,
+      [fulfillIx],
+      [otherAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
+    )
+    chai.assert(fulfillTxConfirmation, "fulfilling partner promise failed")
+  });
+
+
+  it("able to break partner promise", async () => {
+    const text = [126, 41, 132, 45, 90, 41, 0, 23] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 3)
+    const size = new BN(50000000)
+
+    const makeIx = await program
+      .methods
+      .makePartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+        partner: otherAccountKp.publicKey,
+      })
+      .instruction();
+
+    const makeTxConfirmation = await sendVersionedTransaction(
+      provider.connection,
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
+    )
+    chai.assert(makeTxConfirmation, "making partner promise failed")
+
+    const breakIx = await program
+      .methods
+      .breakPartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        creator: newAccountKp.publicKey,
+        partner: otherAccountKp.publicKey,
+      })
+      .instruction();
+
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    const breakTxConfirmation = await sendVersionedTransaction(
+      provider.connection,
+      [breakIx],
+      [authorKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
+    )
+    chai.assert(breakTxConfirmation, "breaking partner promise failed")
+  });
+
+  it("program error when non-partner tries to fulfill partner promise", async () => {
+    const text = [0, 157, 132, 45, 212, 30, 42, 23] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
+    const size = new BN(50000000)
+
+    const makeIx = await program
+      .methods
+      .makePartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+        partner: otherAccountKp.publicKey,
+      })
+      .instruction();
+
+    const makeTxConfirmation = await sendVersionedTransaction(
+      provider.connection,
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
+    )
+    chai.assert(makeTxConfirmation, "making partner promise failed")
+
+    const nonPartnerFulfillIx = await program
+      .methods
+      .fulfillPartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: authorKp.publicKey,
+        creator: newAccountKp.publicKey,
+      })
+      .instruction();
+
+    const nonPartnerFulfillTxConfirmation = async () => {
+      return sendVersionedTransaction(
+        provider.connection,
+        [nonPartnerFulfillIx],
+        [authorKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
+      )
+    }
+
+    chai.expect(nonPartnerFulfillTxConfirmation()).to.eventually
+      .be.rejectedWith("Simulation failed.")
+      .and.be.an.instanceOf(Error)
+  });
+
+  it("program error when non-author tries to break partner promise", async () => {
+    const text = [42, 187, 99, 155, 201, 77, 13, 250] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 3)
+    const size = new BN(50000000)
+
+    const makeIx = await program
+      .methods
+      .makePartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+        partner: otherAccountKp.publicKey,
+      })
+      .instruction();
+
+    const makeTxConfirmation = await sendVersionedTransaction(
+      provider.connection,
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
+    )
+    chai.assert(makeTxConfirmation, "making partner promise failed")
+
+    const nonAuthorBreakIx = await program
+      .methods
+      .breakPartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        creator: newAccountKp.publicKey,
+        partner: otherAccountKp.publicKey,
+      })
+      .instruction();
+
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    const nonAuthorBreakTxConfirmation = async () => {
+      return sendVersionedTransaction(
+        provider.connection,
+        [nonAuthorBreakIx],
+        [otherAccountKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
+      )
+    }
+
+    chai.expect(nonAuthorBreakTxConfirmation()).to.eventually
+      .be.rejectedWith("Simulation failed.")
+      .and.be.an.instanceOf(Error)
+  });
+
+  it("program error when partner tries to fulfill promise after deadline", async () => {
+    const text = [0, 32, 132, 45, 212, 30, 42, 23] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 3)
+    const size = new BN(50000000)
+
+    const makeIx = await program
+      .methods
+      .makePartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+        partner: otherAccountKp.publicKey,
+      })
+      .instruction();
+
+    const makeTxConfirmation = await sendVersionedTransaction(
+      provider.connection,
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
+    )
+    chai.assert(makeTxConfirmation, "making partner promise failed")
+
+    const partnerFulfillIx = await program
+      .methods
+      .fulfillPartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: otherAccountKp.publicKey,
+        creator: newAccountKp.publicKey,
+      })
+      .instruction();
+
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    const partnerFulfillTxConfirmation = async () => {
+      return sendVersionedTransaction(
+        provider.connection,
+        [partnerFulfillIx],
+        [otherAccountKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
+      )
+    }
+
+    chai.expect(partnerFulfillTxConfirmation()).to.eventually
+      .be.rejectedWith("Simulation failed.")
+      .and.be.an.instanceOf(Error)
+  });
+
+  it("program error when author tries to break promise before deadline", async () => {
+    const text = [0, 32, 132, 45, 212, 71, 42, 23] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
+    const size = new BN(50000000)
+
+    const makeIx = await program
+      .methods
+      .makePartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+        partner: otherAccountKp.publicKey,
+      })
+      .instruction();
+
+    const makeTxConfirmation = await sendVersionedTransaction(
+      provider.connection,
+      [makeIx],
+      [newAccountKp],
+      0,
+      [],
+      {
+        onStatusUpdate(status):void {},
+      }
+    )
+    chai.assert(makeTxConfirmation, "making partner promise failed")
+
+    const authorBreakIx = await program
+      .methods
+      .breakPartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        creator: newAccountKp.publicKey,
+        partner: otherAccountKp.publicKey,
+      })
+      .instruction();
+
+    const authorBreakTxConfirmation = async () => {
+      return sendVersionedTransaction(
+        provider.connection,
+        [authorBreakIx],
+        [authorKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
+      )
+    }
+
+    chai.expect(authorBreakTxConfirmation()).to.eventually
+      .be.rejectedWith("Simulation failed.")
+      .and.be.an.instanceOf(Error)
+  });
+
+  it("program error when partner promise size is less than 10,000,000 lamports", async () => {
+    const text = [99, 45, 178, 23, 111, 64, 37, 200] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)
+    const size = new BN(5000000)
+
+    const makeIx = await program
+      .methods
+      .makePartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+        partner: otherAccountKp.publicKey,
+      })
+      .instruction();
+
+    const makeTxConfirmation = async () => {
+      return sendVersionedTransaction(
+        provider.connection,
+        [makeIx],
+        [newAccountKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
+      )
+    }
 
     chai.expect(makeTxConfirmation()).to.eventually
       .be.rejectedWith("Simulation failed.")
