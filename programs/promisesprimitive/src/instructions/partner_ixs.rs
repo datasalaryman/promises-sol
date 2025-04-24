@@ -1,6 +1,6 @@
 use crate::state;
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::{native_token::LAMPORTS_PER_SOL};
+use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 
 pub fn make_partner_promise(
     ctx: Context<MakePartnerPromise>,
