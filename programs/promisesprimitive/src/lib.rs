@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+pub mod state;
+
 declare_id!("9NnVb7JtJL6WtKnWXB7NsTwZDrR7P616yRC4FxcXN2r5");
 
 const AUTHOR: Pubkey = pubkey!("fTcVudr5vjBanSe9eYuX9HS3DuzjWKwavYBMbhLn2SJ");
@@ -236,7 +238,7 @@ pub struct MakeSelfPromise<'info> {
         seeds = [b"selfpromise", signer.key().as_ref(), text.as_ref(), &deadline_secs.to_le_bytes().to_vec(), &size.to_le_bytes().to_vec()],
         bump
     )]
-    pub promise_account: Account<'info, SelfPromise>,
+    pub promise_account: Account<'info, state::SelfPromise>,
     #[account(mut, address = AUTHOR)]
     pub author: SystemAccount<'info>,
     pub system_program: Program<'info, System>,
@@ -257,7 +259,7 @@ pub struct FulFillSelfPromise<'info> {
         bump = promise_account.bump,
         close = signer
     )]
-    promise_account: Account<'info, SelfPromise>,
+    promise_account: Account<'info, state::SelfPromise>,
     system_program: Program<'info, System>,
 }
 
@@ -278,7 +280,7 @@ pub struct BreakSelfPromise<'info> {
         bump = promise_account.bump,
         close = creator
     )]
-    pub promise_account: Account<'info, SelfPromise>,
+    pub promise_account: Account<'info, state::SelfPromise>,
     system_program: Program<'info, System>,
 }
 
@@ -300,7 +302,7 @@ pub struct MakePartnerPromise<'info> {
         seeds = [b"partnerpromise", signer.key().as_ref(), partner.key().as_ref(), text.as_ref(), &deadline_secs.to_le_bytes().to_vec(), &size.to_le_bytes().to_vec()],
         bump
     )]
-    pub promise_account: Account<'info, PartnerPromise>,
+    pub promise_account: Account<'info, state::PartnerPromise>,
     #[account(mut, address = AUTHOR)]
     pub author: SystemAccount<'info>,
     pub system_program: Program<'info, System>,
@@ -323,7 +325,7 @@ pub struct FulFillPartnerPromise<'info> {
         bump = promise_account.bump,
         close = creator
     )]
-    promise_account: Account<'info, PartnerPromise>,
+    promise_account: Account<'info, state::PartnerPromise>,
     system_program: Program<'info, System>,
 }
 
@@ -346,23 +348,6 @@ pub struct BreakPartnerPromise<'info> {
         bump = promise_account.bump,
         close = creator
     )]
-    promise_account: Account<'info, PartnerPromise>,
+    promise_account: Account<'info, state::PartnerPromise>,
     system_program: Program<'info, System>,
-}
-
-#[account]
-pub struct SelfPromise {
-    text: [u8; 8],
-    unix_seconds: u64,
-    size: u64,
-    bump: u8,
-}
-
-#[account]
-pub struct PartnerPromise {
-    partner: Pubkey,
-    text: [u8; 8],
-    unix_seconds: u64,
-    size: u64,
-    bump: u8,
 }
