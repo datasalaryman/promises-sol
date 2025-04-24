@@ -14,6 +14,105 @@ export type Promisesprimitive = {
   },
   "instructions": [
     {
+      "name": "breakPartnerPromise",
+      "discriminator": [
+        231,
+        251,
+        137,
+        144,
+        185,
+        65,
+        135,
+        199
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true,
+          "address": "fTcVudr5vjBanSe9eYuX9HS3DuzjWKwavYBMbhLn2SJ"
+        },
+        {
+          "name": "creator",
+          "writable": true
+        },
+        {
+          "name": "partner",
+          "writable": true
+        },
+        {
+          "name": "promiseAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  114,
+                  116,
+                  110,
+                  101,
+                  114,
+                  112,
+                  114,
+                  111,
+                  109,
+                  105,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "account",
+                "path": "partner"
+              },
+              {
+                "kind": "arg",
+                "path": "text"
+              },
+              {
+                "kind": "arg",
+                "path": "deadlineSecs"
+              },
+              {
+                "kind": "arg",
+                "path": "size"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "text",
+          "type": {
+            "array": [
+              "u8",
+              8
+            ]
+          }
+        },
+        {
+          "name": "deadlineSecs",
+          "type": "u64"
+        },
+        {
+          "name": "size",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "breakSelfPromise",
       "discriminator": [
         224,
@@ -60,6 +159,100 @@ export type Promisesprimitive = {
               {
                 "kind": "account",
                 "path": "creator"
+              },
+              {
+                "kind": "arg",
+                "path": "text"
+              },
+              {
+                "kind": "arg",
+                "path": "deadlineSecs"
+              },
+              {
+                "kind": "arg",
+                "path": "size"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "text",
+          "type": {
+            "array": [
+              "u8",
+              8
+            ]
+          }
+        },
+        {
+          "name": "deadlineSecs",
+          "type": "u64"
+        },
+        {
+          "name": "size",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "fulfillPartnerPromise",
+      "discriminator": [
+        200,
+        27,
+        31,
+        148,
+        238,
+        107,
+        58,
+        173
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "creator",
+          "writable": true
+        },
+        {
+          "name": "promiseAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  114,
+                  116,
+                  110,
+                  101,
+                  114,
+                  112,
+                  114,
+                  111,
+                  109,
+                  105,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "account",
+                "path": "signer"
               },
               {
                 "kind": "arg",
@@ -185,6 +378,105 @@ export type Promisesprimitive = {
       ]
     },
     {
+      "name": "makePartnerPromise",
+      "discriminator": [
+        231,
+        116,
+        7,
+        149,
+        225,
+        237,
+        135,
+        250
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "partner",
+          "writable": true
+        },
+        {
+          "name": "promiseAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  114,
+                  116,
+                  110,
+                  101,
+                  114,
+                  112,
+                  114,
+                  111,
+                  109,
+                  105,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              },
+              {
+                "kind": "account",
+                "path": "partner"
+              },
+              {
+                "kind": "arg",
+                "path": "text"
+              },
+              {
+                "kind": "arg",
+                "path": "deadlineSecs"
+              },
+              {
+                "kind": "arg",
+                "path": "size"
+              }
+            ]
+          }
+        },
+        {
+          "name": "author",
+          "writable": true,
+          "address": "fTcVudr5vjBanSe9eYuX9HS3DuzjWKwavYBMbhLn2SJ"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "text",
+          "type": {
+            "array": [
+              "u8",
+              8
+            ]
+          }
+        },
+        {
+          "name": "deadlineSecs",
+          "type": "u64"
+        },
+        {
+          "name": "size",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "makeSelfPromise",
       "discriminator": [
         227,
@@ -275,6 +567,19 @@ export type Promisesprimitive = {
   ],
   "accounts": [
     {
+      "name": "partnerPromise",
+      "discriminator": [
+        60,
+        254,
+        165,
+        64,
+        158,
+        134,
+        176,
+        187
+      ]
+    },
+    {
       "name": "selfPromise",
       "discriminator": [
         38,
@@ -289,6 +594,39 @@ export type Promisesprimitive = {
     }
   ],
   "types": [
+    {
+      "name": "partnerPromise",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "partner",
+            "type": "pubkey"
+          },
+          {
+            "name": "text",
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "unixSeconds",
+            "type": "u64"
+          },
+          {
+            "name": "size",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
     {
       "name": "selfPromise",
       "type": {
