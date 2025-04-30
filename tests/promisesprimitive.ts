@@ -617,6 +617,39 @@ describe("promisesprimitive", async () => {
     chai.assert(breakTxConfirmation, "breaking partner promise failed")
   });
 
+  it("program error when partner is creator when making promise", async () => {
+    const text = [126, 41, 132, 45, 90, 41, 0, 23] as Array<number>
+    const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 3)
+    const size = new BN(50000000)
+
+    const makeIx = await program
+      .methods
+      .makePartnerPromise(text, deadlineSecs, size)
+      .accounts({
+        signer: newAccountKp.publicKey,
+        partner: newAccountKp.publicKey, // Using same account as partner
+      })
+      .instruction();
+
+    const makeTxConfirmation = async () => {
+      return sendVersionedTransaction(
+        provider.connection,
+        [makeIx],
+        [newAccountKp],
+        0,
+        [],
+        {
+          onStatusUpdate(status):void {},
+        }
+      )
+    }
+
+    chai.expect(makeTxConfirmation()).to.eventually
+      .be.rejectedWith("Simulation failed.")
+      .and.be.an.instanceOf(Error)
+
+  });
+
   it("program error when non-partner tries to fulfill partner promise", async () => {
     const text = [0, 157, 132, 45, 212, 30, 42, 23] as Array<number>
     const deadlineSecs = new BN(Math.floor(Date.now()/1000) + 10)

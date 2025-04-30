@@ -13,6 +13,10 @@ pub fn make_partner_promise(
     require_gte!(size, 10000000);
 
     ctx.accounts.promise_account.bump = ctx.bumps.promise_account;
+
+    msg!("Checking if partner is not the signer");
+    require_neq!(ctx.accounts.partner.key(), ctx.accounts.signer.key());
+
     ctx.accounts.promise_account.partner = ctx.accounts.partner.key();
     ctx.accounts.promise_account.size = size;
 
