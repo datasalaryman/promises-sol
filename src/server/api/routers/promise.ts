@@ -86,8 +86,8 @@ export const promiseRouter = createTRPCRouter({
     .input(
       z.object({
         content: z.string(),
-        epoch: z.number(),
-        lamports: z.number(),
+        epoch: z.bigint(),
+        lamports: z.bigint(),
         creatorWallet: z.string(),
         partnerWallet: z.string(),
       }),
