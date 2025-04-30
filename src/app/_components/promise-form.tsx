@@ -345,6 +345,9 @@ export const PromiseForm = () => {
                         if (!PublicKey.isOnCurve(new PublicKey(value))) {
                           return "Address is not a valid user wallet address";
                         }
+                        if (value === publicKey?.toString()) {
+                          return "Can't use your own wallet address as a partner";
+                        }
                       },
                     }}
                     children={(field) => (
