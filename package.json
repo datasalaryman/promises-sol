@@ -10,7 +10,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "dev": "solana airdrop 1.5 fTcVudr5vjBanSe9eYuX9HS3DuzjWKwavYBMbhLn2SJ -u localhost && anchor deploy && anchor run export && next dev --turbo",
+    "dev": "solana airdrop 1.5 fTcVudr5vjBanSe9eYuX9HS3DuzjWKwavYBMbhLn2SJ -u localhost && solana airdrop 1.5 8JVKib1UAVR3AzXgjBn6Kp5kV665NrDxVvG5uBcEshuy -u localhost && anchor deploy && anchor run export && next dev --turbo",
     "dev:ui": "next dev --turbo",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
