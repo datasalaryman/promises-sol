@@ -104,7 +104,7 @@ export const promiseRouter = createTRPCRouter({
   getAllPartner: publicProcedure
     .input(
       z.object({
-        wallet: z.string(),
+        partner: z.string(),
       }),
     )
     .output(
@@ -123,7 +123,7 @@ export const promiseRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const promises = await ctx.db.query.promisesPartner.findMany({
-        where: eq(promisesPartner.creatorWallet, input.wallet),
+        where: eq(promisesPartner.partnerWallet, input.partner),
         orderBy: desc(promisesPartner.promiseEpoch),
       });
       return promises;
