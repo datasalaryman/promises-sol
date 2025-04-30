@@ -175,7 +175,10 @@ export const PromiseForm = () => {
           await (value.isPartner ? makePartnerRefetch() : makeRefetch());
         }
       }
+
+      form.reset();
     }
+
   })
 
   const formValues = useStore(form.store, (state) => state.values)
@@ -235,7 +238,7 @@ export const PromiseForm = () => {
 
   const setEpochDate = (day: Date | undefined) => {
     const hmsEpochSeconds =
-      form.state.values.epochTime - epochToDateOnly(formValues.epochTime).toMillis() / 1000;
+      formValues.epochTime - epochToDateOnly(formValues.epochTime).toMillis() / 1000;
     const newDateEpochSeconds = Math.floor(
       DateTime.fromJSDate(day ?? renderDate.toJSDate())
         .setZone("utc", { keepLocalTime: true })
@@ -278,9 +281,9 @@ export const PromiseForm = () => {
             <WalletMultiButtonDynamic />
           )}
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              form.handleSubmit();
+              await form.handleSubmit();
             }}
             className="space-y-6"
           >
@@ -288,11 +291,12 @@ export const PromiseForm = () => {
               <Label htmlFor="promise">Promise</Label>
               <form.AppField
                 name="promiseContent"
-                children={(field) => (<>
+              >{(field) => (<>
                 <field.Textarea
                   id="promise"
                   placeholder="Enter your promise here..."
                   required
+                  value={field.state.value}
                   onChange={(e) => {
                     e.preventDefault()
                     if (field.state.value.length <= 255) {
@@ -303,14 +307,13 @@ export const PromiseForm = () => {
                 <p className="text-right text-xs text-muted-foreground">
                   {field.state.value.length}/255 characters
                 </p></>)
-              }
-              />
+              }</form.AppField>
             </div>
 
             <div className="flex items-center space-x-2">
               <form.AppField
                 name="isPartner"
-                children={(field) => (
+              >{(field) => (
                   <>
                     <field.Switch
                       id="partner-mode"
@@ -325,14 +328,13 @@ export const PromiseForm = () => {
                     />
                     <Label htmlFor="partner-mode">With accountability partner</Label>
                   </>
-                )}
-              />
+                )}</form.AppField>
             </div>
 
             <div className="space-y-2">
               <form.Subscribe
                 selector={(state) => state.values.isPartner}
-                children={(isPartner) => isPartner ? (
+              >{(isPartner) => isPartner ? (
                   <>
                   <Label htmlFor="partner-wallet">Partner Wallet Address</Label>
                   <form.AppField
@@ -350,29 +352,29 @@ export const PromiseForm = () => {
                         }
                       },
                     }}
-                    children={(field) => (
-                      <>
-                        <field.Input
-                          id="partner-wallet"
-                          placeholder="Enter partner wallet address"
-                          onChange={(e) => {
-                            e.preventDefault()
-                            field.handleChange(e.target.value)
-                          }}
-                          required
-                        />
-                        {(formValues.partnerWallet.length > 0 && !field.state.meta.isValid) ? (
-                          <em role="alert" className="text-xs text-red-500">{field.state.meta.errors.join(', ')}</em>
-                        ) : null}
-
-                        <div className="text-xs text-muted-foreground">Careful! Only this address can release your promise</div>
-                      </>
-                    )}
-                  />
-                  </>
+                  >{(field) => (
+                    <>
+                      <field.Input
+                        id="partner-wallet"
+                        placeholder="Enter partner wallet address"
+                        value={field.state.value}
+                        onChange={(e) => {
+                          e.preventDefault()
+                          field.handleChange(e.target.value)
+                        }}
+                        required
+                      />
+                      {(formValues.partnerWallet.length > 0 && !field.state.meta.isValid) ? (
+                        <em role="alert" className="text-xs text-red-500">{field.state.meta.errors.join(', ')}</em>
+                      ) : null}
+                      <div className="text-xs text-muted-foreground">Careful! Only this address can release your promise</div>
+                    </>
+                  )}
+                </form.AppField>
+                </>
                 ) : null
               }
-              />
+            </form.Subscribe>
             </div>
 
             <div className="">
@@ -419,7 +421,7 @@ export const PromiseForm = () => {
                   <Label>Time</Label>
                   <div className="flex gap-2">
                     <Select
-                      defaultValue={epochToHourOnly(form.state.values.epochTime).toString()}
+                      value={epochToHourOnly(formValues.epochTime).toString()}
                       onValueChange={setEpochHour}
                     >
                       <SelectTrigger>
@@ -468,7 +470,8 @@ export const PromiseForm = () => {
               <Label>Promise Size</Label>
               <form.AppField
                 name="promiseLamports"
-                children={(field) => (
+              >
+                {(field) => (
                   <field.RadioGroup
                     value={field.state.value.toString()}
                     onValueChange={(value) => field.handleChange(parseInt(value))}
@@ -488,14 +491,18 @@ export const PromiseForm = () => {
                     </div>
                   </field.RadioGroup>
                 )}
-              />
+              </form.AppField>
             </div>
+
+
 
             <form.Button
               type="submit"
               className="w-full rounded-md bg-slate-900 text-white hover:bg-slate-800"
               disabled={!publicKey || (!publicKey && formValues.isPartner && !formValues.partnerWallet)}
-              onSubmit={form.handleSubmit}
+              onClick={async () => {
+                await form.handleSubmit();
+              }}
             >
               {publicKey ? "Make Promise" : "Connect Wallet to Continue"}
             </form.Button>
