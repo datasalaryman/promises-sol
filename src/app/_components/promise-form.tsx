@@ -41,6 +41,8 @@ import { TRPCClientError } from "@trpc/client";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 
+import { createFormHook, createFormHookContexts, useStore } from "@tanstack/react-form";
+
 const WalletMultiButtonDynamic = dynamic(
   async () =>
     (await import("@solana/wallet-adapter-react-ui")).WalletMultiButton,
@@ -53,34 +55,142 @@ const WalletDisconnectButtonDynamic = dynamic(
   { ssr: false },
 );
 
+const { fieldContext, formContext } = createFormHookContexts()
+
+const { useAppForm } = createFormHook({
+  fieldComponents: {
+    Input,
+    Switch,
+    Textarea,
+    Calendar,
+    Select,
+    RadioGroup,
+    RadioGroupItem,
+    Button,
+  },
+  formComponents: {
+    Button
+  },
+  fieldContext,
+  formContext,
+})
+
 export const PromiseForm = () => {
-  const renderDate = DateTime.now()
-    .setZone("utc")
-    .set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 });
-  const [promiseContent, setPromiseContent] = useState("");
-  const [promiseLamports, setPromiseLamports] = useState(10000000);
-  const [isPartner, setIsPartner] = useState(false);
-  const [partnerWallet, setPartnerWallet] = useState("");
-  const [isPartnerWalletValid, setIsPartnerWalletValid] = useState(false);
+
+  const [renderDate, setRenderDate] = useState<DateTime>(DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 }))
+
   const { publicKey, signTransaction } = useWallet();
-  const [epochTime, setEpochTime] = useState<number>(
-    Math.floor(renderDate.toMillis() / (1000 * 60)) * 60,
-  );
   const { toast } = useToast();
 
-  const [txSigned, setTxSigned] = useState<number[] | undefined>(undefined);
+  const createSelfPromise = api.promise.createSelf.useMutation();
+  const createPartnerPromise = api.promise.createPartner.useMutation();
+
+  const form = useAppForm({
+    defaultValues: {
+      promiseContent: "",
+      isPartner: false,
+      partnerWallet: "",
+      isPartnerWalletValid: false,
+      epochTime: Math.floor(renderDate.toMillis() / 1000),
+      promiseLamports: 10000000,
+    },
+    onSubmit: async ({ value }) => {
+      try {
+        const txDeserialized = VersionedTransaction.deserialize(
+          new Uint8Array(value.isPartner ? makePartnerTx.serialTx : makeTx.serialTx),
+        );
+        const signedTransaction = await signTransaction!(txDeserialized);
+
+        toast({
+          title: "Transaction signed",
+          description: `Transaction signed by ${publicKey?.toString()}`,
+          className: "bg-white",
+        });
+
+        const serialTx = Array.from(signedTransaction.serialize());
+
+        const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
+          serialTx,
+          blockhash: value.isPartner ? makePartnerTx.blockhash : makeTx.blockhash,
+          blockheight: value.isPartner ? makePartnerTx.blockheight : makeTx.blockheight,
+        });
+
+        toast({
+          title: "Transaction sent",
+          description: "Transaction sent to the network",
+          className: "bg-white",
+        });
+
+        if (confirmationErr) {
+          throw new Error(`Transaction confirmation error: ${confirmationErr}`);
+        }
+
+        toast({
+          title: "Confirmed Transaction",
+          description: "You successfully made a promise",
+          className: "bg-white",
+          action: (
+            <ToastAction altText="View here" asChild>
+              <a href={"https://solscan.io/tx/" + txSig} target="_blank">
+                View here
+              </a>
+            </ToastAction>
+          ),
+        });
+
+        if (value.isPartner) {
+          createPartnerPromise.mutate({
+            content: value.promiseContent,
+            epoch: BigInt(value.epochTime),
+            lamports: BigInt(value.promiseLamports),
+            creatorWallet: publicKey?.toString() ?? "",
+            partnerWallet: value.partnerWallet,
+          });
+        } else {
+          createSelfPromise.mutate({
+            content: value.promiseContent,
+            epoch: BigInt(value.epochTime),
+            lamports: BigInt(value.promiseLamports),
+            wallet: publicKey?.toString() ?? "",
+          });
+        }
+
+        await (value.isPartner ? makePartnerRefetch() : makeRefetch());
+      } catch (err: unknown) {
+        if (err instanceof TRPCClientError) {
+          toast({
+            variant: "destructive",
+            title: "TRPC Client Error",
+            description: `${JSON.stringify(err.shape)}`,
+            className: "bg-red-500",
+          });
+          await (value.isPartner ? makePartnerRefetch() : makeRefetch());
+        } else if (err instanceof Error) {
+          toast({
+            variant: "destructive",
+            title: "Unsuccessful transaction",
+            description: `Transaction failed ${err.message}`,
+            className: "bg-red-500",
+          });
+          await (value.isPartner ? makePartnerRefetch() : makeRefetch());
+        }
+      }
+    }
+  })
+
+  const formValues = useStore(form.store, (state) => state.values)
 
   const { data: makeTx, refetch: makeRefetch } =
     api.solana.makeSelfPromiseGenerate.useQuery(
       {
-        text: promiseContent,
-        deadline: epochTime,
+        text: formValues.promiseContent,
+        deadline: formValues.epochTime,
         // @ts-expect-error - will only fire query if publicKey is defined
         signer: publicKey?.toString(),
-        size: promiseLamports,
+        size: formValues.promiseLamports,
       },
       {
-        enabled: !!publicKey && !!promiseContent,
+        enabled: !!publicKey && !!formValues.promiseContent,
       },
     );
 
@@ -89,15 +199,16 @@ export const PromiseForm = () => {
       {
         // @ts-expect-error - will only fire query if publicKey is defined
         creator: publicKey?.toString(),
-        partner: partnerWallet,
-        text: promiseContent,
-        deadline: epochTime,
-        size: promiseLamports,
+        partner: formValues.partnerWallet,
+        text: formValues.promiseContent,
+        deadline: formValues.epochTime,
+        size: formValues.promiseLamports,
       },
       {
-        enabled: !!publicKey && !!promiseContent && isPartner && !!partnerWallet,
+        enabled: !!publicKey && !!formValues.promiseContent && formValues.isPartner && !!formValues.partnerWallet,
       },
     );
+
 
   const epochToDateOnly = (epochSeconds: number): DateTime => {
     const currentDateMills =
@@ -124,128 +235,30 @@ export const PromiseForm = () => {
 
   const setEpochDate = (day: Date | undefined) => {
     const hmsEpochSeconds =
-      epochTime - epochToDateOnly(epochTime).toMillis() / 1000;
+      form.state.values.epochTime - epochToDateOnly(formValues.epochTime).toMillis() / 1000;
     const newDateEpochSeconds = Math.floor(
       DateTime.fromJSDate(day ?? renderDate.toJSDate())
         .setZone("utc", { keepLocalTime: true })
         .toMillis() / 1000,
     );
 
-    setEpochTime(newDateEpochSeconds + hmsEpochSeconds);
+    form.setFieldValue("epochTime", newDateEpochSeconds + hmsEpochSeconds);
   };
 
   const setEpochHour = (hour: string) => {
-    const oldEpochHourSeconds = epochToHourOnly(epochTime) * 60 * 60;
+    const oldEpochHourSeconds = epochToHourOnly(formValues.epochTime) * 60 * 60;
     const newEpochHourSeconds = parseInt(hour) * 60 * 60;
 
-    setEpochTime(epochTime - oldEpochHourSeconds + newEpochHourSeconds);
+    form.setFieldValue("epochTime", formValues.epochTime - oldEpochHourSeconds + newEpochHourSeconds);
   };
 
   const setEpochMinute = (minute: string) => {
-    const oldEpochMinuteSeconds = epochToMinuteOnly(epochTime) * 60;
+    const oldEpochMinuteSeconds = epochToMinuteOnly(formValues.epochTime) * 60;
     const newEpochMinuteSeconds = parseInt(minute) * 60;
 
-    setEpochTime(epochTime - oldEpochMinuteSeconds + newEpochMinuteSeconds);
+    form.setFieldValue("epochTime", formValues.epochTime - oldEpochMinuteSeconds + newEpochMinuteSeconds);
   };
 
-  const handlePromiseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (e.target.value.length <= 255) {
-      setPromiseContent(e.target.value);
-    }
-  };
-
-  const createSelfPromise = api.promise.createSelf.useMutation();
-  const createPartnerPromise = api.promise.createPartner.useMutation();
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const txDeserialized = VersionedTransaction.deserialize(
-        new Uint8Array(isPartner ? makePartnerTx.serialTx : makeTx.serialTx),
-      );
-      const signedTransaction = await signTransaction!(txDeserialized);
-
-      toast({
-        title: "Transaction signed",
-        description: `Transaction signed by ${publicKey?.toString()}`,
-        className: "bg-white",
-      });
-
-      const serialTx = Array.from(signedTransaction.serialize());
-
-      const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
-        serialTx,
-        blockhash: isPartner ? makePartnerTx.blockhash : makeTx.blockhash,
-        blockheight: isPartner ? makePartnerTx.blockheight : makeTx.blockheight,
-      });
-
-      toast({
-        title: "Transaction sent",
-        description: "Transaction sent to the network",
-        className: "bg-white",
-      });
-
-      if (confirmationErr) {
-        throw new Error(`Transaction confirmation error: ${confirmationErr}`);
-      }
-
-      toast({
-        title: "Confirmed Transaction",
-        description: "You successfully made a promise",
-        className: "bg-white",
-        action: (
-          <ToastAction altText="View here" asChild>
-            <a href={"https://solscan.io/tx/" + txSig} target="_blank">
-              View here
-            </a>
-          </ToastAction>
-        ),
-      });
-
-      if (isPartner) {
-        createPartnerPromise.mutate({
-          content: promiseContent,
-          epoch: BigInt(epochTime),
-          lamports: BigInt(promiseLamports),
-          creatorWallet: publicKey?.toString() ?? "",
-          partnerWallet: partnerWallet,
-        });
-      } else {
-        createSelfPromise.mutate({
-          content: promiseContent,
-          epoch: BigInt(epochTime),
-          lamports: BigInt(promiseLamports),
-          wallet: publicKey?.toString() ?? "",
-        });
-      }
-
-      setPromiseContent("");
-      setPromiseLamports(10000000);
-      setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60);
-      setPartnerWallet("");
-      setIsPartner(false);
-
-      await (isPartner ? makePartnerRefetch() : makeRefetch());
-    } catch (err: unknown) {
-      if (err instanceof TRPCClientError) {
-        toast({
-          variant: "destructive",
-          title: "TRPC Client Error",
-          description: `${JSON.stringify(err.shape)}`,
-          className: "bg-red-500",
-        });
-        await (isPartner ? makePartnerRefetch() : makeRefetch());
-      } else if (err instanceof Error) {
-        toast({
-          variant: "destructive",
-          title: "Unsuccessful transaction",
-          description: `Transaction failed ${err.message}`,
-          className: "bg-red-500",
-        });
-        await (isPartner ? makePartnerRefetch() : makeRefetch());
-      }
-    }
-  };
 
   return (
     <div className="min-h-fit max-w-md py-5">
@@ -264,54 +277,100 @@ export const PromiseForm = () => {
           ) : (
             <WalletMultiButtonDynamic />
           )}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              form.handleSubmit();
+            }}
+            className="space-y-6"
+          >
             <div className="space-y-2">
               <Label htmlFor="promise">Promise</Label>
-              <Textarea
-                id="promise"
-                placeholder="Enter your promise here..."
-                value={promiseContent}
-                onChange={handlePromiseChange}
-                required
+              <form.AppField
+                name="promiseContent"
+                children={(field) => (<>
+                <field.Textarea
+                  id="promise"
+                  placeholder="Enter your promise here..."
+                  required
+                  onChange={(e) => {
+                    e.preventDefault()
+                    if (field.state.value.length <= 255) {
+                      field.handleChange(e.target.value)
+                    }
+                  }}
+                />
+                <p className="text-right text-xs text-muted-foreground">
+                  {field.state.value.length}/255 characters
+                </p></>)
+              }
               />
-              <p className="text-right text-xs text-muted-foreground">
-                {promiseContent.length}/255 characters
-              </p>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Switch
-                id="partner-mode"
-                checked={isPartner}
-                onCheckedChange={setIsPartner}
-                className="border-gray-300 data-[state=checked]:bg-black data-[state=unchecked]:bg-gray-200 [&>span]:bg-white"
+              <form.AppField
+                name="isPartner"
+                children={(field) => (
+                  <>
+                    <field.Switch
+                      id="partner-mode"
+                      checked={field.state.value}
+                      onCheckedChange={(checked) => {
+                        field.setValue(checked)
+                        if (!checked) {
+                          form.setFieldValue("partnerWallet", "")
+                        }
+                      }}
+                      className="border-gray-300 data-[state=checked]:bg-black data-[state=unchecked]:bg-gray-200 [&>span]:bg-white"
+                    />
+                    <Label htmlFor="partner-mode">With accountability partner</Label>
+                  </>
+                )}
               />
-              <Label htmlFor="partner-mode">With accountability partner</Label>
             </div>
 
-            {isPartner && (
-              <div className="space-y-2">
-                <Label htmlFor="partner-wallet">Partner Wallet Address</Label>
-                <Input
-                  id="partner-wallet"
-                  placeholder="Enter partner's wallet address..."
-                  value={partnerWallet}
-                  onChange={(e) => {
-                    setPartnerWallet(e.target.value);
-                    try {
-                      const pubkey = new PublicKey(e.target.value);
-                      setIsPartnerWalletValid(PublicKey.isOnCurve(pubkey));
-                    } catch {
-                      setIsPartnerWalletValid(false);
-                    }
-                  }}
-                  required={isPartner}
-                />
-                {!isPartnerWalletValid && partnerWallet && (
-                  <p className="text-sm text-red-500">Please input a valid Solana wallet address</p>
-                )}
-              </div>
-            )}
+            <div className="space-y-2">
+              <form.Subscribe
+                selector={(state) => state.values.isPartner}
+                children={(isPartner) => isPartner ? (
+                  <>
+                  <Label htmlFor="partner-wallet">Partner Wallet Address</Label>
+                  <form.AppField
+                    name="partnerWallet"
+                    validators={{
+                      onChangeAsync: async ({ value }) => {
+                        if (value.length < 43) {
+                          return "Wallet address input is too short";
+                        }
+                        if (!PublicKey.isOnCurve(new PublicKey(value))) {
+                          return "Address is not a valid user wallet address";
+                        }
+                      },
+                    }}
+                    children={(field) => (
+                      <>
+                        <field.Input
+                          id="partner-wallet"
+                          placeholder="Enter partner wallet address"
+                          onChange={(e) => {
+                            e.preventDefault()
+                            field.handleChange(e.target.value)
+                          }}
+                          required
+                        />
+                        {(formValues.partnerWallet.length > 0 && !field.state.meta.isValid) ? (
+                          <em role="alert" className="text-xs text-red-500">{field.state.meta.errors.join(', ')}</em>
+                        ) : null}
+
+                        <div className="text-xs text-muted-foreground">Careful! Only this address can release your promise</div>
+                      </>
+                    )}
+                  />
+                  </>
+                ) : null
+              }
+              />
+            </div>
 
             <div className="">
               <div className="grid grid-cols-2 gap-4">
@@ -323,13 +382,13 @@ export const PromiseForm = () => {
                         variant="outline"
                         className={cn(
                           "w-full justify-start text-left font-normal",
-                          !epochToDateOnly(epochTime).toJSDate() &&
+                          !epochToDateOnly(formValues.epochTime).toJSDate() &&
                             "text-muted-foreground",
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {epochTime
-                          ? epochToDateOnly(epochTime).toISODate()
+                        {formValues.epochTime
+                          ? epochToDateOnly(formValues.epochTime).toISODate()
                           : "Pick a date"}
                       </Button>
                     </PopoverTrigger>
@@ -337,13 +396,13 @@ export const PromiseForm = () => {
                       <Calendar
                         className="bg-white"
                         mode="single"
-                        selected={epochToDateOnly(epochTime).toJSDate()}
+                        selected={epochToDateOnly(formValues.epochTime).toJSDate()}
                         onSelect={setEpochDate}
                         disabled={{
                           before: DateTime.now().setZone("utc").toJSDate(),
                         }}
                         initialFocus={true}
-                        defaultMonth={epochToDateOnly(epochTime).toJSDate()}
+                        defaultMonth={epochToDateOnly(formValues.epochTime).toJSDate()}
                         modifiersClassNames={{
                           selected:
                             "bg-black text-white hover:bg-slate-700 hover:text-white",
@@ -357,7 +416,7 @@ export const PromiseForm = () => {
                   <Label>Time</Label>
                   <div className="flex gap-2">
                     <Select
-                      defaultValue={epochToHourOnly(epochTime).toString()}
+                      defaultValue={epochToHourOnly(form.state.values.epochTime).toString()}
                       onValueChange={setEpochHour}
                     >
                       <SelectTrigger>
@@ -396,7 +455,7 @@ export const PromiseForm = () => {
               <br />
               <p className="text-sm text-muted-foreground" suppressHydrationWarning>
                 Your promise will expire at{" "}
-                {DateTime.fromMillis(epochTime * 1000)
+                {DateTime.fromMillis(formValues.epochTime * 1000)
                   .setZone("utc")
                   .toLocaleString(DateTime.DATETIME_FULL)}
               </p>
@@ -404,33 +463,39 @@ export const PromiseForm = () => {
 
             <div className="space-y-2">
               <Label>Promise Size</Label>
-              <RadioGroup
-                value={`${promiseLamports}`}
-                onValueChange={(value) => setPromiseLamports(parseInt(value))}
-                className="flex flex-col space-y-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value={"10000000"} id="small" />
-                  <Label htmlFor="small">Small (0.01 SOL)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value={"50000000"} id="medium" />
-                  <Label htmlFor="medium">Medium (0.05 SOL)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value={"100000000"} id="large" />
-                  <Label htmlFor="large">Large (0.1 SOL)</Label>
-                </div>
-              </RadioGroup>
+              <form.AppField
+                name="promiseLamports"
+                children={(field) => (
+                  <field.RadioGroup
+                    value={field.state.value.toString()}
+                    onValueChange={(value) => field.handleChange(parseInt(value))}
+                    className="flex flex-col space-y-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <field.RadioGroupItem value={"10000000"} id="small" />
+                      <Label htmlFor="small">Small (0.01 SOL)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <field.RadioGroupItem value={"50000000"} id="medium" />
+                      <Label htmlFor="medium">Medium (0.05 SOL)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <field.RadioGroupItem value={"100000000"} id="large" />
+                      <Label htmlFor="large">Large (0.1 SOL)</Label>
+                    </div>
+                  </field.RadioGroup>
+                )}
+              />
             </div>
 
-            <Button
+            <form.Button
               type="submit"
               className="w-full rounded-md bg-slate-900 text-white hover:bg-slate-800"
-              disabled={!publicKey || (isPartner && !isPartnerWalletValid)}
+              disabled={!publicKey || (!publicKey && formValues.isPartner && !formValues.partnerWallet)}
+              onSubmit={form.handleSubmit}
             >
               {publicKey ? "Make Promise" : "Connect Wallet to Continue"}
-            </Button>
+            </form.Button>
           </form>
           <div className="pt-2 text-center">
             <Link href="/dash" className="text-xs text-gray-400 underline">
