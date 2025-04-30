@@ -27,12 +27,19 @@ export const PromisesView = () => {
   const { publicKey } = useWallet();
 
   const {
-    data: result,
-    isLoading,
-    isError,
+    data: resultSelf,
+    isLoading: isLoadingSelf,
+    isError: isErrorSelf,
   } = api.promise.getAllSelf.useQuery({ wallet: publicKey?.toString() ?? "" });
 
-  if (isLoading) {
+  const {
+    data: resultPartner,
+    isLoading: isLoadingPartner,
+    isError: isErrorPartner,
+  } = api.promise.getAllPartner.useQuery({ partner: publicKey?.toString() ?? "" });
+
+
+  if (isLoadingSelf || isLoadingPartner) {
     return (
       <div className="max-w-full">
         <WalletModalProvider>
@@ -55,7 +62,7 @@ export const PromisesView = () => {
     );
   }
 
-  if (isError) {
+  if (isErrorSelf || isErrorPartner) {
     return (
       <div className="max-w-full">
         <WalletModalProvider>
@@ -97,8 +104,8 @@ export const PromisesView = () => {
             </Card>
           </Link>
         </div>
-        {(result?.length ?? 0 > 0)
-          ? result?.map((promise) => {
+        {(resultSelf?.length ?? 0 > 0)
+          ? resultSelf?.map((promise) => {
               return (
                 <FulfillDrawer
                   key={promise.id}
@@ -106,6 +113,23 @@ export const PromisesView = () => {
                   promiseContent={promise.promiseContent ?? ""}
                   promiseEpoch={promise.promiseEpoch?.toString() ?? ""}
                   promiseLamports={promise.promiseLamports ?? 0n}
+                  variant="self"
+                  creatorWallet={null}
+                />
+              );
+            })
+          : null}
+        {(resultPartner?.length ?? 0 > 0)
+          ? resultPartner?.map((promise) => {
+              return (
+                <FulfillDrawer
+                  key={promise.id}
+                  id={promise.id}
+                  promiseContent={promise.promiseContent ?? ""}
+                  promiseEpoch={promise.promiseEpoch?.toString() ?? ""}
+                  promiseLamports={promise.promiseLamports ?? 0n}
+                  variant="partner"
+                  creatorWallet={promise.creatorWallet ?? null}
                 />
               );
             })
