@@ -32,12 +32,14 @@ import "@solana/wallet-adapter-react-ui/styles.css";
 import { api } from "@/trpc/react";
 import { trpc } from "@/trpc/vanilla";
 import Link from "next/link";
-import { VersionedTransaction } from "@solana/web3.js";
+import { VersionedTransaction, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { TRPCClientError } from "@trpc/client";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 const WalletMultiButtonDynamic = dynamic(
   async () =>
@@ -57,6 +59,9 @@ export const PromiseForm = () => {
     .set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 });
   const [promiseContent, setPromiseContent] = useState("");
   const [promiseLamports, setPromiseLamports] = useState(10000000);
+  const [isPartner, setIsPartner] = useState(false);
+  const [partnerWallet, setPartnerWallet] = useState("");
+  const [isPartnerWalletValid, setIsPartnerWalletValid] = useState(false);
   const { publicKey, signTransaction } = useWallet();
   const [epochTime, setEpochTime] = useState<number>(
     Math.floor(renderDate.toMillis() / (1000 * 60)) * 60,
@@ -76,7 +81,21 @@ export const PromiseForm = () => {
       },
       {
         enabled: !!publicKey && !!promiseContent,
-        // TODO: refetch every 30 seconds
+      },
+    );
+
+  const { data: makePartnerTx, refetch: makePartnerRefetch } =
+    api.solana.makePartnerPromiseGenerate.useQuery(
+      {
+        // @ts-expect-error - will only fire query if publicKey is defined
+        creator: publicKey?.toString(),
+        partner: partnerWallet,
+        text: promiseContent,
+        deadline: epochTime,
+        size: promiseLamports,
+      },
+      {
+        enabled: !!publicKey && !!promiseContent && isPartner && !!partnerWallet,
       },
     );
 
@@ -135,14 +154,14 @@ export const PromiseForm = () => {
     }
   };
 
-  const createPromise = api.promise.createSelf.useMutation();
-
+  const createSelfPromise = api.promise.createSelf.useMutation();
+  const createPartnerPromise = api.promise.createPartner.useMutation();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       const txDeserialized = VersionedTransaction.deserialize(
-        new Uint8Array(makeTx.serialTx),
+        new Uint8Array(isPartner ? makePartnerTx.serialTx : makeTx.serialTx),
       );
       const signedTransaction = await signTransaction!(txDeserialized);
 
@@ -156,8 +175,8 @@ export const PromiseForm = () => {
 
       const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
         serialTx,
-        blockhash: makeTx.blockhash,
-        blockheight: makeTx.blockheight,
+        blockhash: isPartner ? makePartnerTx.blockhash : makeTx.blockhash,
+        blockheight: isPartner ? makePartnerTx.blockheight : makeTx.blockheight,
       });
 
       toast({
@@ -183,19 +202,30 @@ export const PromiseForm = () => {
         ),
       });
 
-      createPromise.mutate({
-        content: promiseContent,
-        epoch: BigInt(epochTime),
-        lamports: BigInt(promiseLamports),
-        wallet: publicKey?.toString() ?? "",
-        // TODO: add promise PDA here
-      });
+      if (isPartner) {
+        createPartnerPromise.mutate({
+          content: promiseContent,
+          epoch: BigInt(epochTime),
+          lamports: BigInt(promiseLamports),
+          creatorWallet: publicKey?.toString() ?? "",
+          partnerWallet: partnerWallet,
+        });
+      } else {
+        createSelfPromise.mutate({
+          content: promiseContent,
+          epoch: BigInt(epochTime),
+          lamports: BigInt(promiseLamports),
+          wallet: publicKey?.toString() ?? "",
+        });
+      }
 
       setPromiseContent("");
       setPromiseLamports(10000000);
       setEpochTime(Math.floor(renderDate.toMillis() / (1000 * 60)) * 60);
+      setPartnerWallet("");
+      setIsPartner(false);
 
-      await makeRefetch();
+      await (isPartner ? makePartnerRefetch() : makeRefetch());
     } catch (err: unknown) {
       if (err instanceof TRPCClientError) {
         toast({
@@ -204,7 +234,7 @@ export const PromiseForm = () => {
           description: `${JSON.stringify(err.shape)}`,
           className: "bg-red-500",
         });
-        await makeRefetch();
+        await (isPartner ? makePartnerRefetch() : makeRefetch());
       } else if (err instanceof Error) {
         toast({
           variant: "destructive",
@@ -212,7 +242,7 @@ export const PromiseForm = () => {
           description: `Transaction failed ${err.message}`,
           className: "bg-red-500",
         });
-        await makeRefetch();
+        await (isPartner ? makePartnerRefetch() : makeRefetch());
       }
     }
   };
@@ -248,6 +278,40 @@ export const PromiseForm = () => {
                 {promiseContent.length}/255 characters
               </p>
             </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="partner-mode"
+                checked={isPartner}
+                onCheckedChange={setIsPartner}
+                className="border-gray-300 data-[state=checked]:bg-black data-[state=unchecked]:bg-gray-200 [&>span]:bg-white"
+              />
+              <Label htmlFor="partner-mode">With accountability partner</Label>
+            </div>
+
+            {isPartner && (
+              <div className="space-y-2">
+                <Label htmlFor="partner-wallet">Partner Wallet Address</Label>
+                <Input
+                  id="partner-wallet"
+                  placeholder="Enter partner's wallet address..."
+                  value={partnerWallet}
+                  onChange={(e) => {
+                    setPartnerWallet(e.target.value);
+                    try {
+                      const pubkey = new PublicKey(e.target.value);
+                      setIsPartnerWalletValid(PublicKey.isOnCurve(pubkey));
+                    } catch {
+                      setIsPartnerWalletValid(false);
+                    }
+                  }}
+                  required={isPartner}
+                />
+                {!isPartnerWalletValid && partnerWallet && (
+                  <p className="text-sm text-red-500">Please input a valid Solana wallet address</p>
+                )}
+              </div>
+            )}
 
             <div className="">
               <div className="grid grid-cols-2 gap-4">
@@ -363,7 +427,7 @@ export const PromiseForm = () => {
             <Button
               type="submit"
               className="w-full rounded-md bg-slate-900 text-white hover:bg-slate-800"
-              disabled={!publicKey}
+              disabled={!publicKey || (isPartner && !isPartnerWalletValid)}
             >
               {publicKey ? "Make Promise" : "Connect Wallet to Continue"}
             </Button>
