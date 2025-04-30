@@ -93,6 +93,10 @@ export const promiseRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (input.creatorWallet === input.partnerWallet) {
+        throw new Error("Creator and partner cannot be the same");
+      }
+      
       await ctx.db.insert(promisesPartner).values({
         promiseContent: input.content,
         promiseEpoch: BigInt(input.epoch),

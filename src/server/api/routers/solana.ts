@@ -252,6 +252,10 @@ export const solanaRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
+      if (input.creator === input.partner) {
+        throw new Error("Creator and partner cannot be the same");
+      }
+
       const textArray = Array.from(
         Uint8Array.from(
           createHash("sha256").update(input.text).digest(),
