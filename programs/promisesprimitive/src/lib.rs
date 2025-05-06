@@ -1,65 +1,24 @@
 use anchor_lang::prelude::*;
 
-declare_id!("9NnVb7JtJL6WtKnWXB7NsTwZDrR7P616yRC4FxcXN2r5");
+pub mod instructions;
+pub mod state;
 
-const AUTHOR: Pubkey = pubkey!("fTcVudr5vjBanSe9eYuX9HS3DuzjWKwavYBMbhLn2SJ");
+use instructions::*;
+
+declare_id!("9NnVb7JtJL6WtKnWXB7NsTwZDrR7P616yRC4FxcXN2r5");
 
 #[program]
 pub mod promisesprimitive {
-    use anchor_lang::solana_program::{instruction::Instruction, native_token::LAMPORTS_PER_SOL};
-
     use super::*;
 
+    // Re-export the instruction functions directly
     pub fn make_self_promise(
         ctx: Context<MakeSelfPromise>,
         text: [u8; 8],
         deadline_secs: u64,
         size: u64,
     ) -> Result<()> {
-
-        // Check if promise size is at least 10000000 lamports
-        msg!("Checking if promise size is at least 10000000 lamports");
-        require_gte!(size, 10000000);
-
-        ctx.accounts.promise_account.bump = ctx.bumps.promise_account;
-        ctx.accounts.promise_account.size = size;
-
-        msg!("Checking if deadline is at a future time");
-        require_gte!(deadline_secs, Clock::get().unwrap().unix_timestamp as u64);
-        ctx.accounts.promise_account.unix_seconds = deadline_secs;
-        ctx.accounts.promise_account.text = text;
-
-        const FEE_TO_AUTHOR: u64 = LAMPORTS_PER_SOL / 200;
-
-        msg!("Paying the author a fee");
-        let pay_author: Instruction = anchor_lang::solana_program::system_instruction::transfer(
-            &ctx.accounts.signer.key(),
-            &ctx.accounts.author.key(),
-            FEE_TO_AUTHOR,
-        );
-        let _ = anchor_lang::solana_program::program::invoke(
-            &pay_author,
-            &[
-                ctx.accounts.signer.to_account_info(),
-                ctx.accounts.author.to_account_info(),
-            ],
-        );
-
-        msg!("Transfering sol to new promise PDA");
-        let hold_promise: Instruction = anchor_lang::solana_program::system_instruction::transfer(
-            &ctx.accounts.signer.key(),
-            &ctx.accounts.promise_account.key(),
-            size,
-        );
-        let _ = anchor_lang::solana_program::program::invoke(
-            &hold_promise,
-            &[
-                ctx.accounts.signer.to_account_info(),
-                ctx.accounts.promise_account.to_account_info(),
-            ],
-        );
-        msg!("Made a promise with {:?}", ctx.program_id);
-        Ok(())
+        instructions::self_ixs::make_self_promise(ctx, text, deadline_secs, size)
     }
 
     pub fn fulfill_self_promise(
@@ -68,15 +27,7 @@ pub mod promisesprimitive {
         deadline_secs: u64,
         size: u64,
     ) -> Result<()> {
-        msg!("Checking if date criteria was met for fulfillment");
-        require_gte!(deadline_secs, Clock::get().unwrap().unix_timestamp as u64);
-
-        msg!("Returning SOL to creator");
-        **ctx.accounts.promise_account.to_account_info().try_borrow_mut_lamports()? -= size;
-        **ctx.accounts.signer.to_account_info().try_borrow_mut_lamports()? += size;
-
-        msg!("Fulfilled a promise with {:?}", ctx.program_id);
-        Ok(())
+        instructions::self_ixs::fulfill_self_promise(ctx, text, deadline_secs, size)
     }
 
     pub fn break_self_promise(
@@ -85,85 +36,33 @@ pub mod promisesprimitive {
         deadline_secs: u64,
         size: u64,
     ) -> Result<()> {
-        msg!("Checking if date criteria was met for breaking");
-        require_gte!(Clock::get().unwrap().unix_timestamp as u64, deadline_secs);
-
-        msg!("Sending SOL to author");
-        **ctx.accounts.promise_account.to_account_info().try_borrow_mut_lamports()? -= size;
-        **ctx.accounts.signer.to_account_info().try_borrow_mut_lamports()? += size;
-
-        msg!("Broke a promise with {:?}", ctx.program_id);
-        Ok(())
+        instructions::self_ixs::break_self_promise(ctx, text, deadline_secs, size)
     }
 
-}
+    pub fn make_partner_promise(
+        ctx: Context<MakePartnerPromise>,
+        text: [u8; 8],
+        deadline_secs: u64,
+        size: u64,
+    ) -> Result<()> {
+        instructions::partner_ixs::make_partner_promise(ctx, text, deadline_secs, size)
+    }
 
-#[derive(Accounts)]
-#[instruction(
-    text: [u8; 8],
-    deadline_secs: u64,
-    size: u64,
-)]
-pub struct MakeSelfPromise<'info> {
-    #[account(mut)]
-    pub signer: Signer<'info>,
-    #[account(
-        init,
-        payer = signer,
-        space = 8 + 8 + 8 + 8 + 1,
-        seeds = [b"selfpromise", signer.key().as_ref(), text.as_ref(), &deadline_secs.to_le_bytes().to_vec(), &size.to_le_bytes().to_vec()],
-        bump
-    )]
-    pub promise_account: Account<'info, SelfPromise>,
-    #[account(mut, address = AUTHOR)]
-    pub author: SystemAccount<'info>,
-    pub system_program: Program<'info, System>,
-}
+    pub fn fulfill_partner_promise(
+        ctx: Context<FulFillPartnerPromise>,
+        text: [u8; 8],
+        deadline_secs: u64,
+        size: u64,
+    ) -> Result<()> {
+        instructions::partner_ixs::fulfill_partner_promise(ctx, text, deadline_secs, size)
+    }
 
-#[derive(Accounts)]
-#[instruction(
-    text: [u8; 8],
-    deadline_secs: u64,
-    size: u64,
-)]
-pub struct FulFillSelfPromise<'info> {
-    #[account(mut)]
-    pub signer: Signer<'info>,
-    #[account(
-        mut,
-        seeds = [b"selfpromise", signer.key().as_ref(), text.as_ref(), &deadline_secs.to_le_bytes().to_vec(), &size.to_le_bytes().to_vec()],
-        bump = promise_account.bump,
-        close = signer
-    )]
-    promise_account: Account<'info, SelfPromise>,
-    system_program: Program<'info, System>
-}
-
-#[derive(Accounts)]
-#[instruction(
-    text: [u8; 8],
-    deadline_secs: u64,
-    size: u64,
-)]
-pub struct BreakSelfPromise<'info> {
-    #[account(mut, address = AUTHOR)]
-    pub signer: Signer<'info>,
-    #[account(mut)]
-    pub creator: SystemAccount<'info>,
-    #[account(
-        mut,
-        seeds = [b"selfpromise", creator.key().as_ref(), text.as_ref(), &deadline_secs.to_le_bytes().to_vec(), &size.to_le_bytes().to_vec()],
-        bump = promise_account.bump,
-        close = creator
-    )]
-    pub promise_account: Account<'info, SelfPromise>,
-    system_program: Program<'info, System>
-}
-
-#[account]
-pub struct SelfPromise {
-    text: [u8; 8],
-    unix_seconds: u64,
-    size: u64,
-    bump: u8
+    pub fn break_partner_promise(
+        ctx: Context<BreakPartnerPromise>,
+        text: [u8; 8],
+        deadline_secs: u64,
+        size: u64,
+    ) -> Result<()> {
+        instructions::partner_ixs::break_partner_promise(ctx, text, deadline_secs, size)
+    }
 }

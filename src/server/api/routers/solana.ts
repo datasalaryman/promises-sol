@@ -19,7 +19,7 @@ const program = new anchor.Program<Promisesprimitive>(idl, {
 const redis = new Redis(env.REDIS_URL);
 
 export const solanaRouter = createTRPCRouter({
-  makePromiseGenerate: publicProcedure
+  makeSelfPromiseGenerate: publicProcedure
     .input(
       z.object({
         signer: z.string(),
@@ -82,7 +82,12 @@ export const solanaRouter = createTRPCRouter({
 
         await Promise.all([
           redis.set(blockhashCacheKey, blockhash, "EX", expirationTime),
-          redis.set(blockHeightCacheKey, lastValidBlockHeight, "EX", expirationTime),
+          redis.set(
+            blockHeightCacheKey,
+            lastValidBlockHeight,
+            "EX",
+            expirationTime,
+          ),
         ]);
 
         console.log("Fetched and cached new block info");
@@ -106,7 +111,7 @@ export const solanaRouter = createTRPCRouter({
         blockheight: lastValidBlockHeight,
       };
     }),
-  fulfillPromiseGenerate: publicProcedure
+  fulfillSelfPromiseGenerate: publicProcedure
     .input(
       z.object({
         signer: z.string(),
@@ -203,7 +208,7 @@ export const solanaRouter = createTRPCRouter({
         blockheight: lastValidBlockHeight,
       };
     }),
-  breakPromiseGenerate: publicProcedure
+  breakSelfPromiseGenerate: publicProcedure
     .input(
       z.object({
         creator: z.string(),
@@ -228,5 +233,276 @@ export const solanaRouter = createTRPCRouter({
         .instruction();
 
       return JSON.stringify(breakIx);
+    }),
+  makePartnerPromiseGenerate: publicProcedure
+    .input(
+      z.object({
+        creator: z.string(),
+        partner: z.string(),
+        text: z.string().max(255),
+        deadline: z.number(),
+        size: z.number(),
+      }),
+    )
+    .output(
+      z.object({
+        serialTx: z.number().array(),
+        blockhash: z.string(),
+        blockheight: z.number(),
+      }),
+    )
+    .query(async ({ input }) => {
+      if (input.creator === input.partner) {
+        throw new Error("Creator and partner cannot be the same");
+      }
+
+      const textArray = Array.from(
+        Uint8Array.from(
+          createHash("sha256").update(input.text).digest(),
+        ).subarray(0, 8),
+      );
+
+      const createIx = await program.methods
+        .makePartnerPromise(textArray, new BN(input.deadline), new BN(input.size))
+        .accounts({
+          signer: new PublicKey(input.creator),
+          partner: new PublicKey(input.partner),
+        })
+        .instruction();
+
+      const instructions = [createIx];
+
+      // Implement caching for blockhash, lastValidBlockHeight, and blocktime
+      const CACHE_KEY_PREFIX = "solana:blockinfo:";
+      const blockhashCacheKey = `${CACHE_KEY_PREFIX}blockhash`;
+      const blockHeightCacheKey = `${CACHE_KEY_PREFIX}blockheight`;
+
+      // Try to get cached values
+      const [cachedBlockhash, cachedBlockHeight] = await Promise.all([
+        redis.get(blockhashCacheKey),
+        redis.get(blockHeightCacheKey),
+      ]);
+
+      let blockhash: string;
+      let lastValidBlockHeight: number;
+
+      // If we have all cached values, use them
+      if (cachedBlockhash && cachedBlockHeight) {
+        blockhash = cachedBlockhash;
+        lastValidBlockHeight = parseInt(cachedBlockHeight);
+        console.log("Using cached block info");
+      } else {
+        // Fetch fresh values from Solana
+        const blockInfo = await connection.getLatestBlockhash("confirmed");
+        blockhash = blockInfo.blockhash;
+        lastValidBlockHeight = blockInfo.lastValidBlockHeight;
+
+        // Cache the values with expiration based on blocktime
+        const expirationTime = 45; // 45 seconds
+
+        await Promise.all([
+          redis.set(blockhashCacheKey, blockhash, "EX", expirationTime),
+          redis.set(
+            blockHeightCacheKey,
+            lastValidBlockHeight,
+            "EX",
+            expirationTime,
+          ),
+        ]);
+
+        console.log("Fetched and cached new block info");
+      }
+
+      const messageV0 = new anchor.web3.TransactionMessage({
+        payerKey: new PublicKey(input.creator),
+        recentBlockhash: blockhash,
+        instructions,
+      }).compileToV0Message();
+
+      const transaction = new VersionedTransaction(messageV0);
+
+      return {
+        serialTx: Array.from(transaction.serialize()),
+        blockhash: blockhash,
+        blockheight: lastValidBlockHeight,
+      };
+    }),
+  fulfillPartnerPromiseGenerate: publicProcedure
+    .input(
+      z.object({
+        creator: z.string(),
+        partner: z.string(),
+        text: z.string().max(255),
+        deadline: z.number(),
+        size: z.number(),
+      }),
+    )
+    .output(
+      z.object({
+        serialTx: z.number().array(),
+        blockhash: z.string(),
+        blockheight: z.number(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const textArray = Array.from(
+        Uint8Array.from(
+          createHash("sha256").update(input.text).digest(),
+        ).subarray(0, 8),
+      );
+
+      const fulfillIx = await program.methods
+        .fulfillPartnerPromise(textArray, new BN(input.deadline), new BN(input.size))
+        .accounts({
+          signer: new PublicKey(input.partner),
+          creator: new PublicKey(input.creator),
+        })
+        .instruction();
+
+      const instructions = [fulfillIx];
+
+      // Implement caching for blockhash, lastValidBlockHeight, and blocktime
+      const CACHE_KEY_PREFIX = "solana:blockinfo:";
+      const blockhashCacheKey = `${CACHE_KEY_PREFIX}blockhash`;
+      const blockHeightCacheKey = `${CACHE_KEY_PREFIX}blockheight`;
+
+      // Try to get cached values
+      const [cachedBlockhash, cachedBlockHeight] = await Promise.all([
+        redis.get(blockhashCacheKey),
+        redis.get(blockHeightCacheKey),
+      ]);
+
+      let blockhash: string;
+      let lastValidBlockHeight: number;
+
+      // If we have all cached values, use them
+      if (cachedBlockhash && cachedBlockHeight) {
+        blockhash = cachedBlockhash;
+        lastValidBlockHeight = parseInt(cachedBlockHeight);
+        console.log("Using cached block info");
+      } else {
+        // Fetch fresh values from Solana
+        const blockInfo = await connection.getLatestBlockhash("confirmed");
+        blockhash = blockInfo.blockhash;
+        lastValidBlockHeight = blockInfo.lastValidBlockHeight;
+
+        // Cache the values with expiration based on blocktime
+        const expirationTime = 45; // 45 seconds
+
+        await Promise.all([
+          redis.set(blockhashCacheKey, blockhash, "EX", expirationTime),
+          redis.set(
+            blockHeightCacheKey,
+            lastValidBlockHeight,
+            "EX",
+            expirationTime,
+          ),
+        ]);
+
+        console.log("Fetched and cached new block info");
+      }
+
+      const messageV0 = new anchor.web3.TransactionMessage({
+        payerKey: new PublicKey(input.partner),
+        recentBlockhash: blockhash,
+        instructions,
+      }).compileToV0Message();
+
+      const transaction = new VersionedTransaction(messageV0);
+
+      return {
+        serialTx: Array.from(transaction.serialize()),
+        blockhash: blockhash,
+        blockheight: lastValidBlockHeight,
+      };
+    }),
+  breakPartnerPromiseGenerate: publicProcedure
+    .input(
+      z.object({
+        creator: z.string(),
+        partner: z.string(),
+        text: z.string().max(255),
+        deadline: z.number(),
+        size: z.number(),
+      }),
+    )
+    .output(
+      z.object({
+        serialTx: z.number().array(),
+        blockhash: z.string(),
+        blockheight: z.number(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const textArray = Array.from(
+        Uint8Array.from(
+          createHash("sha256").update(input.text).digest(),
+        ).subarray(0, 8),
+      );
+
+      const breakIx = await program.methods
+        .breakPartnerPromise(textArray, new BN(input.deadline), new BN(input.size))
+        .accounts({
+          creator: new PublicKey(input.creator),
+          partner: new PublicKey(input.partner),
+        })
+        .instruction();
+
+      const instructions = [breakIx];
+
+      // Implement caching for blockhash, lastValidBlockHeight, and blocktime
+      const CACHE_KEY_PREFIX = "solana:blockinfo:";
+      const blockhashCacheKey = `${CACHE_KEY_PREFIX}blockhash`;
+      const blockHeightCacheKey = `${CACHE_KEY_PREFIX}blockheight`;
+
+      // Try to get cached values
+      const [cachedBlockhash, cachedBlockHeight] = await Promise.all([
+        redis.get(blockhashCacheKey),
+        redis.get(blockHeightCacheKey),
+      ]);
+
+      let blockhash: string;
+      let lastValidBlockHeight: number;
+
+      // If we have all cached values, use them
+      if (cachedBlockhash && cachedBlockHeight) {
+        blockhash = cachedBlockhash;
+        lastValidBlockHeight = parseInt(cachedBlockHeight);
+        console.log("Using cached block info");
+      } else {
+        // Fetch fresh values from Solana
+        const blockInfo = await connection.getLatestBlockhash("confirmed");
+        blockhash = blockInfo.blockhash;
+        lastValidBlockHeight = blockInfo.lastValidBlockHeight;
+
+        // Cache the values with expiration based on blocktime
+        const expirationTime = 45; // 45 seconds
+
+        await Promise.all([
+          redis.set(blockhashCacheKey, blockhash, "EX", expirationTime),
+          redis.set(
+            blockHeightCacheKey,
+            lastValidBlockHeight,
+            "EX",
+            expirationTime,
+          ),
+        ]);
+
+        console.log("Fetched and cached new block info");
+      }
+
+      const messageV0 = new anchor.web3.TransactionMessage({
+        payerKey: new PublicKey(input.creator),
+        recentBlockhash: blockhash,
+        instructions,
+      }).compileToV0Message();
+
+      const transaction = new VersionedTransaction(messageV0);
+
+      return {
+        serialTx: Array.from(transaction.serialize()),
+        blockhash: blockhash,
+        blockheight: lastValidBlockHeight,
+      };
     }),
 });

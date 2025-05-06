@@ -18,6 +18,8 @@ type FulfillDrawerProps = {
   promiseContent: string;
   promiseEpoch: string;
   promiseLamports: bigint | null;
+  variant: "self" | "partner";
+  creatorWallet: string | null;
 };
 
 export const FulfillDrawer = ({
@@ -25,14 +27,18 @@ export const FulfillDrawer = ({
   promiseContent,
   promiseEpoch,
   promiseLamports,
+  variant,
+  creatorWallet,
 }: FulfillDrawerProps) => {
   const { publicKey, signTransaction } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
 
-  const releasePromise = api.promise.release.useMutation();
+  const releasePromise = variant === "self" ?
+    api.promise.releaseSelf.useMutation() :
+    api.promise.releasePartner.useMutation();
 
-  const { data: fulfillTx, refetch: fulfillRefetch } =
-    api.solana.fulfillPromiseGenerate.useQuery(
+  const { data: fulfillTxSelf, refetch: fulfillRefetchSelf } =
+    api.solana.fulfillSelfPromiseGenerate.useQuery(
       {
         text: promiseContent,
         // @ts-expect-error - will only fire query if publicKey is defined
@@ -41,15 +47,36 @@ export const FulfillDrawer = ({
         size: parseInt(promiseLamports?.toString() ?? "0"),
       },
       {
-        enabled: !!publicKey && isOpen,
+        enabled: !!publicKey && isOpen && variant === "self",
+        // TODO: refetch every 30 seconds
+      },
+    );
+
+  const { data: fulfillTxPartner, refetch: fulfillRefetchPartner } =
+    api.solana.fulfillPartnerPromiseGenerate.useQuery(
+      {
+        text: promiseContent,
+        // @ts-expect-error - will only fire query if publicKey is defined
+        creator: creatorWallet?.toString(),
+        deadline: parseInt(promiseEpoch),
+        size: parseInt(promiseLamports?.toString() ?? "0"),
+        partner: publicKey?.toString() ?? "",
+      },
+      {
+        enabled: !!publicKey && isOpen && variant === "partner",
         // TODO: refetch every 30 seconds
       },
     );
 
   const handlePromiseRelease = async (id: number) => {
-    const txDeserialized = VersionedTransaction.deserialize(
-      new Uint8Array(fulfillTx.serialTx),
-    );
+    const txDeserialized = variant === "self" ?
+      VersionedTransaction.deserialize(
+        new Uint8Array(fulfillTxSelf?.serialTx ?? []),
+      ) :
+      VersionedTransaction.deserialize(
+        new Uint8Array(fulfillTxPartner?.serialTx ?? []),
+      );
+
     const signedTransaction = await signTransaction!(txDeserialized);
 
     toast({
@@ -62,8 +89,8 @@ export const FulfillDrawer = ({
 
     const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
       serialTx,
-      blockhash: fulfillTx.blockhash,
-      blockheight: fulfillTx.blockheight,
+      blockhash: variant === "self" ? fulfillTxSelf?.blockhash : fulfillTxPartner?.blockhash,
+      blockheight: variant === "self" ? fulfillTxSelf?.blockheight : fulfillTxPartner?.blockheight,
     });
 
     toast({
@@ -133,6 +160,10 @@ export const FulfillDrawer = ({
                 <Drawer.Title className="mb-2 text-wrap break-words font-medium">
                   {promiseContent}
                 </Drawer.Title>
+
+                {variant === "partner" ?
+                  (<><p>You are the partner for this promise</p><br/></>) : null
+                }
                 <div>
                   <strong>Expires: </strong>{" "}
                   {DateTime.fromMillis(parseInt(promiseEpoch ?? "0") * 1000)
@@ -143,6 +174,11 @@ export const FulfillDrawer = ({
                   <strong>Size: </strong>{" "}
                   {parseInt(promiseLamports?.toString() ?? "0") / 10 ** 9} SOL
                 </div>
+                {variant === "partner" && (
+                  <div>
+                    <strong>Creator: </strong>{creatorWallet ?? "None"}
+                  </div>
+                )}
               </div>
               <Drawer.Description />
             </div>

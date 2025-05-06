@@ -9,6 +9,7 @@ import {
   timestamp,
   tinytext,
   varchar,
+  boolean,
 } from "drizzle-orm/mysql-core";
 import { BugIcon } from "lucide-react";
 
@@ -33,4 +34,20 @@ export const promisesSelf = createTable("promises_self", {
     unsigned: true,
   }),
   promiseWallet: tinytext("promise_wallet"),
+});
+
+export const promisesPartner = createTable("promises_partner", {
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: timestamp("updated_at").onUpdateNow(),
+  promiseContent: tinytext("promise_content"),
+  promiseEpoch: bigint("promise_epoch", { mode: "bigint", unsigned: true }),
+  promiseLamports: bigint("promise_lamports", {
+    mode: "bigint",
+    unsigned: true,
+  }),
+  creatorWallet: tinytext("creator_wallet").notNull(),
+  partnerWallet: tinytext("partner_wallet").notNull(),
 });
