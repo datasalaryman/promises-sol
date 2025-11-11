@@ -1,4 +1,4 @@
-# solpromises.xyz
+# promisekeepr.xyz
 
 A commitment contract system on Solana where users stake SOL to keep their promises. It's stickk.com for your SOL!
 

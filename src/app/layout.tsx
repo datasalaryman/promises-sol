@@ -6,7 +6,7 @@ import { type Metadata } from "next";
 import { Navbar } from "@/app/_components/Navbar";
 
 export const metadata: Metadata = {
-  title: "solpromises.xyz",
+  title: "promisekeepr.xyz",
   description: "Make your promise on Solana",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
