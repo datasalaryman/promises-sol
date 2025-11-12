@@ -317,7 +317,6 @@ export const PromiseForm = () => {
                   <>
                     <field.Switch
                       id="partner-mode"
-                      disabled={true}
                       checked={field.state.value}
                       onCheckedChange={(checked) => {
                         field.setValue(checked)
