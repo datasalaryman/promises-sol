@@ -4,6 +4,8 @@ import "@/styles/globals.css";
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 import { Navbar } from "@/app/_components/Navbar";
+import { WalletContext } from "@/app/_contexts/Wallet";
+import { TRPCReactProvider } from "@/trpc/react";
 
 export const metadata: Metadata = {
   title: "promisekeepr.xyz",
@@ -18,8 +20,12 @@ export default function RootLayout({
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>
         <div className="gaps-2 flex flex-col">
-          <Navbar />
-          {children}
+          <WalletContext>
+            <TRPCReactProvider>
+              <Navbar />
+              {children}
+            </TRPCReactProvider>
+          </WalletContext>
         </div>
         <Toaster />
       </body>
