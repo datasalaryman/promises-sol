@@ -11,18 +11,6 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import { FulfillDrawer } from "@/app/_components/fulfill-drawer";
 
-const WalletMultiButtonDynamic = dynamic(
-  async () =>
-    (await import("@solana/wallet-adapter-react-ui")).WalletMultiButton,
-  { ssr: false },
-);
-
-const WalletDisconnectButtonDynamic = dynamic(
-  async () =>
-    (await import("@solana/wallet-adapter-react-ui")).WalletDisconnectButton,
-  { ssr: false },
-);
-
 export const PromisesView = () => {
   const { publicKey } = useWallet();
 
@@ -42,13 +30,6 @@ export const PromisesView = () => {
   if (isLoadingSelf || isLoadingPartner) {
     return (
       <div className="max-w-full">
-        <WalletModalProvider>
-          {publicKey ? (
-            <WalletDisconnectButtonDynamic />
-          ) : (
-            <WalletMultiButtonDynamic />
-          )}
-        </WalletModalProvider>
         <div className="flex basis-1/2 flex-col flex-nowrap py-9 sm:flex-row sm:flex-wrap">
           <div key="loading" className="pb-2 pr-2">
             <Card className="h-40 w-80">
@@ -65,13 +46,6 @@ export const PromisesView = () => {
   if (isErrorSelf || isErrorPartner) {
     return (
       <div className="max-w-full">
-        <WalletModalProvider>
-          {publicKey ? (
-            <WalletDisconnectButtonDynamic />
-          ) : (
-            <WalletMultiButtonDynamic />
-          )}
-        </WalletModalProvider>
         <div className="flex basis-1/2 flex-col flex-nowrap items-center py-9 sm:flex-wrap">
           <div key="error" className="pb-2 pr-2">
             <Card className="h-40 w-80">
@@ -87,13 +61,6 @@ export const PromisesView = () => {
 
   return (
     <div className="max-w-full">
-      <WalletModalProvider>
-        {publicKey ? (
-          <WalletDisconnectButtonDynamic />
-        ) : (
-          <WalletMultiButtonDynamic />
-        )}
-      </WalletModalProvider>
       <div className="flex basis-1/2 flex-col flex-nowrap py-9 sm:flex-row sm:flex-wrap">
         <div className="pb-2 pr-2">
           <Link href="/">

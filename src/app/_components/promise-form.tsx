@@ -43,17 +43,6 @@ import { Switch } from "@/components/ui/switch";
 
 import { createFormHook, createFormHookContexts, useStore } from "@tanstack/react-form";
 
-const WalletMultiButtonDynamic = dynamic(
-  async () =>
-    (await import("@solana/wallet-adapter-react-ui")).WalletMultiButton,
-  { ssr: false },
-);
-
-const WalletDisconnectButtonDynamic = dynamic(
-  async () =>
-    (await import("@solana/wallet-adapter-react-ui")).WalletDisconnectButton,
-  { ssr: false },
-);
 
 const { fieldContext, formContext } = createFormHookContexts()
 
@@ -275,11 +264,6 @@ export const PromiseForm = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 p-4 pt-0">
-          {publicKey ? (
-            <WalletDisconnectButtonDynamic />
-          ) : (
-            <WalletMultiButtonDynamic />
-          )}
           <form
             onSubmit={async (e) => {
               e.preventDefault();

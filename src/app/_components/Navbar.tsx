@@ -1,13 +1,33 @@
+"use client";
+
+import { useWallet } from "@solana/wallet-adapter-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 
+const WalletMultiButtonDynamic = dynamic(
+  async () =>
+    (await import("@solana/wallet-adapter-react-ui")).WalletMultiButton,
+  { ssr: false },
+);
+
+const WalletDisconnectButtonDynamic = dynamic(
+  async () =>
+    (await import("@solana/wallet-adapter-react-ui")).WalletDisconnectButton,
+  { ssr: false },
+);
+
+
 export function Navbar() {
+
+  const { publicKey } = useWallet();
+
   return (
     <header className="w-full px-6 py-3">
-      <nav>
-        <div className="mx-auto flex max-w-7xl justify-center space-x-8">
+      <nav className="min-w-full flex justify-between">
+        <div className="flex max-w-7xl justify-center items-center space-x-8">
           <Link
             href="/"
-            className="text-gray-600 transition-colors hover:text-gray-900"
+            className="text-gray-600 transition-colors hover:text-gray-900 inline"
           >
             Create Promise
           </Link>
@@ -24,6 +44,11 @@ export function Navbar() {
             How it works
           </Link>
         </div>
+          {publicKey ? (
+            <WalletDisconnectButtonDynamic />
+          ) : (
+            <WalletMultiButtonDynamic />
+          )}
       </nav>
     </header>
   );
