@@ -37,6 +37,7 @@ export const env = createEnv({
     RPC_URL: process.env.RPC_URL,
     REDIS_URL: process.env.REDIS_URL,
     NEXT_PUBLIC_RPC_URL: process.env.NEXT_PUBLIC_RPC_URL,
+    WS_URL: process.env.WS_URL,
     // ANCHOR_WALLET: process.env.ANCHOR_WALLET,
     // AUTHOR_KEYPAIR: process.env.AUTHOR_KEYPAIR
   },
