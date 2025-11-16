@@ -35,6 +35,8 @@
     "@radix-ui/react-switch": "^1.2.2",
     "@radix-ui/react-toast": "^1.2.6",
     "@solana-developers/helpers": "^2.8.1",
+    "@solana/kit": "^5.0.0",
+    "@solana/react": "^5.0.0",
     "@solana/wallet-adapter-base": "^0.9.24",
     "@solana/wallet-adapter-react": "^0.15.37",
     "@solana/wallet-adapter-react-ui": "^0.9.37",
