@@ -26,6 +26,7 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletUi } from "@wallet-ui/react";
 import { DateTime } from "luxon";
 // Default styles that can be overridden by your app
 import "@solana/wallet-adapter-react-ui/styles.css";
@@ -68,7 +69,8 @@ export const PromiseForm = () => {
 
   const [renderDate, setRenderDate] = useState<DateTime>(DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 }))
 
-  const { publicKey, signTransaction } = useWallet();
+  const { signTransaction } = useWallet();
+  const { account } = useWalletUi();
   const { toast } = useToast();
 
   const createSelfPromise = api.promise.createSelf.useMutation();
@@ -92,7 +94,7 @@ export const PromiseForm = () => {
 
         toast({
           title: "Transaction signed",
-          description: `Transaction signed by ${publicKey?.toString()}`,
+          description: `Transaction signed by ${account?.address}`,
           className: "bg-white",
         });
 
@@ -132,7 +134,7 @@ export const PromiseForm = () => {
             content: value.promiseContent,
             epoch: BigInt(value.epochTime),
             lamports: BigInt(value.promiseLamports),
-            creatorWallet: publicKey?.toString() ?? "",
+            creatorWallet: account?.address ?? "",
             partnerWallet: value.partnerWallet,
           });
         } else {
@@ -140,7 +142,7 @@ export const PromiseForm = () => {
             content: value.promiseContent,
             epoch: BigInt(value.epochTime),
             lamports: BigInt(value.promiseLamports),
-            wallet: publicKey?.toString() ?? "",
+            wallet: account?.address ?? "",
           });
         }
 
@@ -177,27 +179,27 @@ export const PromiseForm = () => {
       {
         text: formValues.promiseContent,
         deadline: formValues.epochTime,
-        // @ts-expect-error - will only fire query if publicKey is defined
-        signer: publicKey?.toString(),
+        // @ts-expect-error - will only fire query if account is defined
+        signer: account?.address,
         size: formValues.promiseLamports,
       },
       {
-        enabled: !!publicKey && !!formValues.promiseContent,
+        enabled: !!account && !!formValues.promiseContent,
       },
     );
 
   const { data: makePartnerTx, refetch: makePartnerRefetch } =
     api.solana.makePartnerPromiseGenerate.useQuery(
       {
-        // @ts-expect-error - will only fire query if publicKey is defined
-        creator: publicKey?.toString(),
+        // @ts-expect-error - will only fire query if account is defined
+        creator: account?.address,
         partner: formValues.partnerWallet,
         text: formValues.promiseContent,
         deadline: formValues.epochTime,
         size: formValues.promiseLamports,
       },
       {
-        enabled: !!publicKey && !!formValues.promiseContent && formValues.isPartner && !!formValues.partnerWallet,
+        enabled: !!account && !!formValues.promiseContent && formValues.isPartner && !!formValues.partnerWallet,
       },
     );
 
@@ -331,7 +333,7 @@ export const PromiseForm = () => {
                         if (!PublicKey.isOnCurve(new PublicKey(value))) {
                           return "Address is not a valid user wallet address";
                         }
-                        if (value === publicKey?.toString()) {
+                        if (value === account?.address) {
                           return "Can't use your own wallet address as a partner";
                         }
                       },
@@ -483,12 +485,12 @@ export const PromiseForm = () => {
             <form.Button
               type="submit"
               className="w-full rounded-md bg-slate-900 text-white hover:bg-slate-800"
-              disabled={!publicKey || (!publicKey && formValues.isPartner && !formValues.partnerWallet)}
+              disabled={!account || (!account && formValues.isPartner && !formValues.partnerWallet)}
               onClick={async () => {
                 await form.handleSubmit();
               }}
             >
-              {publicKey ? "Make Promise" : "Connect Wallet to Continue"}
+              {account ? "Make Promise" : "Connect Wallet to Continue"}
             </form.Button>
           </form>
           <div className="pt-2 text-center">
