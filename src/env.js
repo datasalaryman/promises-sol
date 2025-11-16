@@ -12,6 +12,7 @@ export const env = createEnv({
       .enum(["development", "test", "production"])
       .default("development"),
     RPC_URL: z.string(),
+    WS_URL: z.string(),
     REDIS_URL: z.string(),
   },
 
