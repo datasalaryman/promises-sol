@@ -1,0 +1,12 @@
+{
+    "idl": "target/idl/promisesprimitive.json",
+    "before": [],
+    "scripts": {
+        "js": {
+            "from": "@codama/renderers-js",
+            "args": [
+                "clients/js/src/generated"
+            ]
+        }
+    }
+}
