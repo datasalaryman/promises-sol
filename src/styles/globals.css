@@ -2,6 +2,7 @@
 
 @plugin 'tailwindcss-animate';
 @plugin '@tailwindcss/typography';
+@import '@wallet-ui/tailwind/index.css';
 
 @custom-variant dark (&:is(.dark *));
 
