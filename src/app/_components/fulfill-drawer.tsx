@@ -12,6 +12,7 @@ import { trpc } from "@/trpc/vanilla";
 import { ToastAction } from "@/components/ui/toast";
 import { useState } from "react";
 import { DateTime } from "luxon";
+import { getBase64Encoder } from "@solana/kit";
 
 type FulfillDrawerProps = {
   id: number;
@@ -71,10 +72,10 @@ export const FulfillDrawer = ({
   const handlePromiseRelease = async (id: number) => {
     const txDeserialized = variant === "self" ?
       VersionedTransaction.deserialize(
-        new Uint8Array(fulfillTxSelf?.serialTx ?? []),
+        new Uint8Array(getBase64Encoder().encode(fulfillTxSelf?.serialTx)),
       ) :
       VersionedTransaction.deserialize(
-        new Uint8Array(fulfillTxPartner?.serialTx ?? []),
+        new Uint8Array(getBase64Encoder().encode(fulfillTxPartner?.serialTx)),
       );
 
     const signedTransaction = await signTransaction!(txDeserialized);
