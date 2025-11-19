@@ -34,7 +34,6 @@ import { api } from "@/trpc/react";
 import { trpc } from "@/trpc/vanilla";
 import Link from "next/link";
 import { VersionedTransaction, PublicKey } from "@solana/web3.js";
-import * as anchor from "@coral-xyz/anchor";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
