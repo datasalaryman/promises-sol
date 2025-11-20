@@ -5,14 +5,14 @@ import { Drawer } from "vaul";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
-import { PublicKey, VersionedTransaction } from "@solana/web3.js";
+import { VersionedTransaction } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "@/hooks/use-toast";
 import { trpc } from "@/trpc/vanilla";
 import { ToastAction } from "@/components/ui/toast";
 import { useState } from "react";
 import { DateTime } from "luxon";
-import { getBase64Encoder } from "@solana/kit";
+import { getBase64Decoder, getBase64Encoder } from "@solana/kit";
 
 type FulfillDrawerProps = {
   id: number;
@@ -86,7 +86,7 @@ export const FulfillDrawer = ({
       className: "bg-white",
     });
 
-    const serialTx = Array.from(signedTransaction.serialize());
+    const serialTx = getBase64Decoder().decode(signedTransaction.serialize());
 
     const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
       serialTx,
