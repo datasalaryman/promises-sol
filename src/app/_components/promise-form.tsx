@@ -42,7 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 
 import { createFormHook, createFormHookContexts, useStore } from "@tanstack/react-form";
-import { Address, getBase64Encoder, isOffCurveAddress } from "@solana/kit";
+import { Address, getBase64Decoder, getBase64Encoder, isOffCurveAddress } from "@solana/kit";
 
 
 const { fieldContext, formContext } = createFormHookContexts()
@@ -101,7 +101,7 @@ export const PromiseForm = () => {
           className: "bg-white",
         });
 
-        const serialTx = Array.from(signedTransaction.serialize());
+        const serialTx = getBase64Decoder().decode(signedTransaction.serialize());
 
         const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
           serialTx,

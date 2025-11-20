@@ -12,7 +12,7 @@ import { trpc } from "@/trpc/vanilla";
 import { ToastAction } from "@/components/ui/toast";
 import { useState } from "react";
 import { DateTime } from "luxon";
-import { getBase64Encoder } from "@solana/kit";
+import { getBase64Decoder, getBase64Encoder } from "@solana/kit";
 
 type FulfillDrawerProps = {
   id: number;
@@ -86,7 +86,7 @@ export const FulfillDrawer = ({
       className: "bg-white",
     });
 
-    const serialTx = Array.from(signedTransaction.serialize());
+    const serialTx = getBase64Decoder().decode(signedTransaction.serialize());
 
     const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
       serialTx,
