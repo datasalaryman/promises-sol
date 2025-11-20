@@ -33,7 +33,7 @@ import "@solana/wallet-adapter-react-ui/styles.css";
 import { api } from "@/trpc/react";
 import { trpc } from "@/trpc/vanilla";
 import Link from "next/link";
-import { VersionedTransaction, PublicKey } from "@solana/web3.js";
+import { VersionedTransaction } from "@solana/web3.js";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -42,7 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 
 import { createFormHook, createFormHookContexts, useStore } from "@tanstack/react-form";
-import { getBase64Encoder } from "@solana/kit";
+import { Address, getBase64Encoder, isOffCurveAddress } from "@solana/kit";
 
 
 const { fieldContext, formContext } = createFormHookContexts()
@@ -81,7 +81,6 @@ export const PromiseForm = () => {
       promiseContent: "",
       isPartner: false,
       partnerWallet: "",
-      isPartnerWalletValid: false,
       epochTime: Math.floor(renderDate.toMillis() / 1000),
       promiseLamports: 10000000,
     },
@@ -188,9 +187,11 @@ export const PromiseForm = () => {
         size: formValues.promiseLamports,
       },
       {
-        enabled: !!account && !!formValues.promiseContent,
+        enabled: !!account && !!formValues.promiseContent && !formValues.isPartner,
       },
     );
+
+  const [isPartnerWalletValid, setIsPartnerWalletValid] = useState(false);
 
   const { data: makePartnerTx, refetch: makePartnerRefetch } =
     api.solana.makePartnerPromiseGenerate.useQuery(
@@ -203,7 +204,10 @@ export const PromiseForm = () => {
         size: formValues.promiseLamports,
       },
       {
-        enabled: !!account && !!formValues.promiseContent && formValues.isPartner && !!formValues.partnerWallet,
+        enabled: !!account && 
+                 !!formValues.promiseContent && 
+                 formValues.isPartner && 
+                 isPartnerWalletValid,
       },
     );
 
@@ -331,15 +335,24 @@ export const PromiseForm = () => {
                     name="partnerWallet"
                     validators={{
                       onChangeAsync: async ({ value }) => {
+                        if (value.length === 0) {
+                          setIsPartnerWalletValid(false);
+                          return undefined;
+                        }
                         if (value.length < 43) {
+                          setIsPartnerWalletValid(false);
                           return "Wallet address input is too short";
                         }
-                        if (!PublicKey.isOnCurve(new PublicKey(value))) {
+                        if (isOffCurveAddress(value as Address)) {
+                          setIsPartnerWalletValid(false);
                           return "Address is not a valid user wallet address";
                         }
                         if (value === account?.address) {
+                          setIsPartnerWalletValid(false);
                           return "Can't use your own wallet address as a partner";
                         }
+                        setIsPartnerWalletValid(true);
+                        return undefined;
                       },
                     }}
                   >{(field) => (
