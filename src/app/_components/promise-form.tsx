@@ -24,12 +24,8 @@ import {
 } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-import { useWallet } from "@solana/wallet-adapter-react";
-import { SolanaCluster, UiWalletAccount, useWalletAccountMessageSigner, useWalletAccountTransactionSigner, useWalletUi } from "@wallet-ui/react";
+import { SolanaCluster, UiWalletAccount, useWalletAccountTransactionSigner } from "@wallet-ui/react";
 import { DateTime } from "luxon";
-// Default styles that can be overridden by your app
-import "@solana/wallet-adapter-react-ui/styles.css";
 import { api } from "@/trpc/react";
 import { trpc } from "@/trpc/vanilla";
 import Link from "next/link";

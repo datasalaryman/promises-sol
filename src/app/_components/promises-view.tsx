@@ -3,9 +3,6 @@
 import type React from "react";
 import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-// Default styles that can be overridden by your app
-import "@solana/wallet-adapter-react-ui/styles.css";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import { FulfillDrawer } from "@/app/_components/fulfill-drawer";
