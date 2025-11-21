@@ -24,16 +24,11 @@ import {
 } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletUi } from "@wallet-ui/react";
+import { SolanaCluster, UiWalletAccount, useWalletAccountTransactionSigner } from "@wallet-ui/react";
 import { DateTime } from "luxon";
-// Default styles that can be overridden by your app
-import "@solana/wallet-adapter-react-ui/styles.css";
 import { api } from "@/trpc/react";
 import { trpc } from "@/trpc/vanilla";
 import Link from "next/link";
-import { VersionedTransaction } from "@solana/web3.js";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -42,7 +37,15 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 
 import { createFormHook, createFormHookContexts, useStore } from "@tanstack/react-form";
-import { Address, getBase64Decoder, getBase64Encoder, isOffCurveAddress } from "@solana/kit";
+import { 
+  type Address, 
+  decompileTransactionMessage, 
+  getBase64EncodedWireTransaction, 
+  getBase64Encoder, 
+  getCompiledTransactionMessageDecoder, 
+  getTransactionDecoder, 
+  isOffCurveAddress, 
+} from "@solana/kit";
 
 
 const { fieldContext, formContext } = createFormHookContexts()
@@ -65,12 +68,12 @@ const { useAppForm } = createFormHook({
   formContext,
 })
 
-export const PromiseForm = () => {
+export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cluster: SolanaCluster }) => {
 
   const [renderDate, setRenderDate] = useState<DateTime>(DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 }))
 
-  const { signTransaction } = useWallet();
-  const { account } = useWalletUi();
+  // const { signTransaction } = useWallet();
+  const messageSigner = useWalletAccountTransactionSigner(account, cluster.id);
   const { toast } = useToast();
 
   const createSelfPromise = api.promise.createSelf.useMutation();
@@ -86,14 +89,18 @@ export const PromiseForm = () => {
     },
     onSubmit: async ({ value }) => {
       try {
-
+        // @ts-expect-error - will only be defined if query is enabled
         const transactionBytes = getBase64Encoder().encode(value.isPartner ? makePartnerTx.serialTx : makeTx.serialTx);
 
-        const transaction = VersionedTransaction.deserialize(
-          new Uint8Array(transactionBytes),
-        );
+        const decoded = getTransactionDecoder().decode(transactionBytes);
+        const compiledTransaction = getCompiledTransactionMessageDecoder().decode(decoded.messageBytes);
+        const transaction = decompileTransactionMessage(compiledTransaction);
         
-        const signedTransaction = await signTransaction!(transaction);
+        // const signedTransaction = await signTransaction!(transaction);
+
+
+        const transactions = await messageSigner.modifyAndSignTransactions([decoded]);
+        const signatureBytes = transactions[0]!.signatures[messageSigner.address];
 
         toast({
           title: "Transaction signed",
@@ -101,12 +108,14 @@ export const PromiseForm = () => {
           className: "bg-white",
         });
 
-        const serialTx = getBase64Decoder().decode(signedTransaction.serialize());
+        const serialTx = getBase64EncodedWireTransaction(transactions[0]!) as string;
 
         const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
           serialTx,
-          blockhash: value.isPartner ? makePartnerTx.blockhash : makeTx.blockhash,
-          blockheight: value.isPartner ? makePartnerTx.blockheight : makeTx.blockheight,
+          // @ts-expect-error - will only be defined if query is enabled
+          blockhash: value.isPartner ? makePartnerTx?.blockhash : makeTx?.blockhash,
+          // @ts-expect-error - will only be defined if query is enabled
+          blockheight: value.isPartner ? makePartnerTx?.blockheight : makeTx?.blockheight,
         });
 
         toast({
@@ -182,7 +191,6 @@ export const PromiseForm = () => {
       {
         text: formValues.promiseContent,
         deadline: formValues.epochTime,
-        // @ts-expect-error - will only fire query if account is defined
         signer: account?.address,
         size: formValues.promiseLamports,
       },
@@ -196,7 +204,6 @@ export const PromiseForm = () => {
   const { data: makePartnerTx, refetch: makePartnerRefetch } =
     api.solana.makePartnerPromiseGenerate.useQuery(
       {
-        // @ts-expect-error - will only fire query if account is defined
         creator: account?.address,
         partner: formValues.partnerWallet,
         text: formValues.promiseContent,

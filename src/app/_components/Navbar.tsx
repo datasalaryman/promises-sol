@@ -1,13 +1,10 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletUiDropdown } from "@wallet-ui/react";
 import Link from "next/link";
 
 
 export function Navbar() {
-
-  const { publicKey } = useWallet();
 
   return (
     <header className="w-full px-6 py-3">

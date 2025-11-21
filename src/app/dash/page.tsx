@@ -1,14 +1,18 @@
+"use client";
+
 import { WalletContext } from "@/app/_contexts/Wallet";
 import { TRPCReactProvider } from "@/trpc/react";
 import { PromisesView } from "@/app/_components/promises-view";
+import { useWalletUi } from "@wallet-ui/react";
 
-export default async function Home() {
+export default function Home() {
+  const { account, cluster } = useWalletUi();
   return (
     <main className="flex h-screen w-full flex-col px-4 sm:px-28">
       <WalletContext>
         <TRPCReactProvider>
           <h1 className="py-9 text-xl font-bold"> Your Promises</h1>
-          <PromisesView />
+          {account ? <PromisesView account={account} cluster={cluster} /> : <p>Please connect your wallet</p>}
         </TRPCReactProvider>
       </WalletContext>
     </main>
