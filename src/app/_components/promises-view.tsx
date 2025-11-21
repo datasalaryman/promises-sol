@@ -4,27 +4,26 @@ import type React from "react";
 import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import { useWallet } from "@solana/wallet-adapter-react";
 // Default styles that can be overridden by your app
 import "@solana/wallet-adapter-react-ui/styles.css";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import { FulfillDrawer } from "@/app/_components/fulfill-drawer";
+import { SolanaCluster, UiWalletAccount, useWalletUi } from "@wallet-ui/react";
 
-export const PromisesView = () => {
-  const { publicKey } = useWallet();
+export const PromisesView = ({ account, cluster } : { account: UiWalletAccount, cluster: SolanaCluster }) => {
 
   const {
     data: resultSelf,
     isLoading: isLoadingSelf,
     isError: isErrorSelf,
-  } = api.promise.getAllSelf.useQuery({ wallet: publicKey?.toString() ?? "" });
+  } = api.promise.getAllSelf.useQuery({ wallet: account.address ?? "" });
 
   const {
     data: resultPartner,
     isLoading: isLoadingPartner,
     isError: isErrorPartner,
-  } = api.promise.getAllPartner.useQuery({ partner: publicKey?.toString() ?? "" });
+  } = api.promise.getAllPartner.useQuery({ partner: account.address ?? "" });
 
 
   if (isLoadingSelf || isLoadingPartner) {
@@ -82,6 +81,8 @@ export const PromisesView = () => {
                   promiseLamports={promise.promiseLamports ?? 0n}
                   variant="self"
                   creatorWallet={null}
+                  account={account}
+                  cluster={cluster}
                 />
               );
             })
@@ -97,6 +98,8 @@ export const PromisesView = () => {
                   promiseLamports={promise.promiseLamports ?? 0n}
                   variant="partner"
                   creatorWallet={promise.creatorWallet ?? null}
+                  account={account}
+                  cluster={cluster}
                 />
               );
             })

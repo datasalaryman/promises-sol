@@ -5,14 +5,13 @@ import { Drawer } from "vaul";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
-import { VersionedTransaction } from "@solana/web3.js";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "@/hooks/use-toast";
 import { trpc } from "@/trpc/vanilla";
 import { ToastAction } from "@/components/ui/toast";
 import { useState } from "react";
 import { DateTime } from "luxon";
-import { getBase64Decoder, getBase64Encoder } from "@solana/kit";
+import { getBase64Decoder, getBase64EncodedWireTransaction, getBase64Encoder, getCompiledTransactionMessageDecoder, getTransactionDecoder } from "@solana/kit";
+import { SolanaCluster, UiWalletAccount, useWalletAccountTransactionSigner } from "@wallet-ui/react";
 
 type FulfillDrawerProps = {
   id: number;
@@ -21,6 +20,8 @@ type FulfillDrawerProps = {
   promiseLamports: bigint | null;
   variant: "self" | "partner";
   creatorWallet: string | null;
+  account: UiWalletAccount;
+  cluster: SolanaCluster;
 };
 
 export const FulfillDrawer = ({
@@ -30,9 +31,11 @@ export const FulfillDrawer = ({
   promiseLamports,
   variant,
   creatorWallet,
+  account,
+  cluster,
 }: FulfillDrawerProps) => {
-  const { publicKey, signTransaction } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
+  const messageSigner = useWalletAccountTransactionSigner(account, cluster.id);
 
   const releasePromise = variant === "self" ?
     api.promise.releaseSelf.useMutation() :
@@ -42,13 +45,12 @@ export const FulfillDrawer = ({
     api.solana.fulfillSelfPromiseGenerate.useQuery(
       {
         text: promiseContent,
-        // @ts-expect-error - will only fire query if publicKey is defined
-        signer: publicKey?.toString(),
+        signer: account.address, 
         deadline: parseInt(promiseEpoch),
         size: parseInt(promiseLamports?.toString() ?? "0"),
       },
       {
-        enabled: !!publicKey && isOpen && variant === "self",
+        enabled: !!account && isOpen && variant === "self",
         // TODO: refetch every 30 seconds
       },
     );
@@ -61,32 +63,34 @@ export const FulfillDrawer = ({
         creator: creatorWallet?.toString(),
         deadline: parseInt(promiseEpoch),
         size: parseInt(promiseLamports?.toString() ?? "0"),
-        partner: publicKey?.toString() ?? "",
+        partner: account?.address ?? "",
       },
       {
-        enabled: !!publicKey && isOpen && variant === "partner",
+        enabled: !!account && isOpen && variant === "partner",
         // TODO: refetch every 30 seconds
       },
     );
 
   const handlePromiseRelease = async (id: number) => {
     const txDeserialized = variant === "self" ?
-      VersionedTransaction.deserialize(
-        new Uint8Array(getBase64Encoder().encode(fulfillTxSelf?.serialTx)),
+      getTransactionDecoder().decode(
+        getBase64Encoder().encode(fulfillTxSelf?.serialTx),
       ) :
-      VersionedTransaction.deserialize(
-        new Uint8Array(getBase64Encoder().encode(fulfillTxPartner?.serialTx)),
+      getTransactionDecoder().decode(
+        getBase64Encoder().encode(fulfillTxPartner?.serialTx),
       );
 
-    const signedTransaction = await signTransaction!(txDeserialized);
+    const txCompiled = getCompiledTransactionMessageDecoder().decode(txDeserialized.messageBytes);
+
+    const transactions = await messageSigner.modifyAndSignTransactions([txDeserialized]);
 
     toast({
       title: "Transaction signed",
-      description: `Transaction signed by ${publicKey?.toString()}`,
+      description: `Transaction signed by ${account?.address}`,
       className: "bg-white",
     });
 
-    const serialTx = getBase64Decoder().decode(signedTransaction.serialize());
+    const serialTx = getBase64EncodedWireTransaction(transactions[0]!);
 
     const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
       serialTx,
