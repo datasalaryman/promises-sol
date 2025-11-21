@@ -74,6 +74,7 @@ export const FulfillDrawer = ({
   const handlePromiseRelease = async (id: number) => {
     const txDeserialized = variant === "self" ?
       getTransactionDecoder().decode(
+        // @ts-expect-error - will only be defined if query is enabled
         getBase64Encoder().encode(fulfillTxSelf?.serialTx),
       ) :
       getTransactionDecoder().decode(
@@ -94,7 +95,9 @@ export const FulfillDrawer = ({
 
     const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
       serialTx,
+      // @ts-expect-error - will only be defined if query is enabled
       blockhash: variant === "self" ? fulfillTxSelf?.blockhash : fulfillTxPartner?.blockhash,
+      // @ts-expect-error - will only be defined if query is enabled
       blockheight: variant === "self" ? fulfillTxSelf?.blockheight : fulfillTxPartner?.blockheight,
     });
 

@@ -89,7 +89,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
     },
     onSubmit: async ({ value }) => {
       try {
-
+        // @ts-expect-error - will only be defined if query is enabled
         const transactionBytes = getBase64Encoder().encode(value.isPartner ? makePartnerTx.serialTx : makeTx.serialTx);
 
         const decoded = getTransactionDecoder().decode(transactionBytes);
@@ -112,8 +112,10 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
 
         const { txSig, confirmationErr } = await trpc.rpc.sendAndConfirm.query({
           serialTx,
-          blockhash: value.isPartner ? makePartnerTx.blockhash : makeTx.blockhash,
-          blockheight: value.isPartner ? makePartnerTx.blockheight : makeTx.blockheight,
+          // @ts-expect-error - will only be defined if query is enabled
+          blockhash: value.isPartner ? makePartnerTx?.blockhash : makeTx?.blockhash,
+          // @ts-expect-error - will only be defined if query is enabled
+          blockheight: value.isPartner ? makePartnerTx?.blockheight : makeTx?.blockheight,
         });
 
         toast({
