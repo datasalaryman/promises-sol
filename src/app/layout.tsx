@@ -10,7 +10,7 @@ import { TRPCReactProvider } from "@/trpc/react";
 export const metadata: Metadata = {
   title: "promisekeepr.xyz",
   description: "Make your promise on Solana",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: "icon", url: "/promisekeepr.ico" }],
 };
 
 export default function RootLayout({
