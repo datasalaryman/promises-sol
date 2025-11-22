@@ -20,6 +20,7 @@ export function Navbar() {
               height={40}
               className="h-8 w-auto"
             />
+            <span className="text-xl font-serif font-bold">Promisekeepr</span>
           </Link>
           <Link
             href="/"
