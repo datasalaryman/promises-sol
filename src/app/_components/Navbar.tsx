@@ -13,19 +13,19 @@ export function Navbar() {
         <div className="flex max-w-7xl justify-center items-center space-x-8">
           <Link
             href="/"
-            className="text-gray-600 transition-colors hover:text-gray-900 inline"
+            className="text-muted-foreground transition-colors hover:text-foreground inline"
           >
             Create Promise
           </Link>
           <Link
             href="/dash"
-            className="text-gray-600 transition-colors hover:text-gray-900"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             View Promises
           </Link>
           <Link
             href="/how-it-works"
-            className="text-gray-600 transition-colors hover:text-gray-900"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             How it works
           </Link>
