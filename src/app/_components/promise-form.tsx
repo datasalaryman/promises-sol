@@ -105,7 +105,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
         toast({
           title: "Transaction signed",
           description: `Transaction signed by ${account?.address}`,
-          className: "bg-white",
+          className: "bg-card",
         });
 
         const serialTx = getBase64EncodedWireTransaction(transactions[0]!) as string;
@@ -121,7 +121,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
         toast({
           title: "Transaction sent",
           description: "Transaction sent to the network",
-          className: "bg-white",
+          className: "bg-card",
         });
 
         if (confirmationErr) {
@@ -131,7 +131,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
         toast({
           title: "Confirmed Transaction",
           description: "You successfully made a promise",
-          className: "bg-white",
+          className: "bg-card",
           action: (
             <ToastAction altText="View here" asChild>
               <a href={"https://solscan.io/tx/" + txSig} target="_blank">
@@ -165,7 +165,6 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
             variant: "destructive",
             title: "TRPC Client Error",
             description: `${JSON.stringify(err.shape)}`,
-            className: "bg-red-500",
           });
           await (value.isPartner ? makePartnerRefetch() : makeRefetch());
         } else if (err instanceof Error) {
@@ -173,7 +172,6 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
             variant: "destructive",
             title: "Unsuccessful transaction",
             description: `Transaction failed ${err.message}`,
-            className: "bg-red-500",
           });
           await (value.isPartner ? makePartnerRefetch() : makeRefetch());
         }
@@ -325,7 +323,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
                           form.setFieldValue("partnerWallet", "")
                         }
                       }}
-                      className="border-gray-300 data-[state=checked]:bg-black data-[state=unchecked]:bg-gray-200 [&>span]:bg-white"
+                      className="border-border data-[state=checked]:bg-primary data-[state=unchecked]:bg-secondary [&>span]:bg-primary-foreground"
                     />
                     <Label htmlFor="partner-mode">With accountability partner</Label>
                   </>
@@ -375,7 +373,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
                         required
                       />
                       {(formValues.partnerWallet.length > 0 && !field.state.meta.isValid) ? (
-                        <em role="alert" className="text-xs text-red-500">{field.state.meta.errors.join(', ')}</em>
+                        <em role="alert" className="text-xs text-destructive">{field.state.meta.errors.join(', ')}</em>
                       ) : null}
                       <div className="text-xs text-muted-foreground">Careful! Only this address can release your promise</div>
                     </>
@@ -409,7 +407,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                       <Calendar
-                        className="bg-white"
+                        className="bg-popover"
                         mode="single"
                         selected={epochToDateOnly(formValues.epochTime).toJSDate()}
                         onSelect={setEpochDate}
@@ -420,7 +418,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
                         defaultMonth={epochToDateOnly(formValues.epochTime).toJSDate()}
                         modifiersClassNames={{
                           selected:
-                            "bg-black text-white hover:bg-slate-700 hover:text-white",
+                            "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
                         }}
                       />
                     </PopoverContent>
@@ -437,7 +435,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
                       <SelectTrigger>
                         <SelectValue placeholder="Hour" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-64 bg-white md:max-h-72">
+                      <SelectContent className="max-h-64 bg-popover md:max-h-72">
                         <SelectGroup>
                           {Array.from(Array(24).keys()).map((h) => (
                             <SelectItem key={h} value={h.toString()}>
@@ -452,7 +450,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
                       <SelectTrigger>
                         <SelectValue placeholder="Min" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-64 bg-white md:max-h-72">
+                      <SelectContent className="max-h-64 bg-popover md:max-h-72">
                         <SelectGroup>
                           {Array.from({ length: 12 }, (_, i) => i * 5).map(
                             (m) => (
@@ -508,7 +506,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
 
             <form.Button
               type="submit"
-              className="w-full rounded-md bg-slate-900 text-white hover:bg-slate-800"
+              className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={!account || (!account && formValues.isPartner && !formValues.partnerWallet)}
               onClick={async () => {
                 await form.handleSubmit();
@@ -518,7 +516,7 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
             </form.Button>
           </form>
           <div className="pt-2 text-center">
-            <Link href="/dash" className="text-xs text-gray-400 underline">
+            <Link href="/dash" className="text-xs text-muted-foreground underline">
               View Promises
             </Link>
           </div>

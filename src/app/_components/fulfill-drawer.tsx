@@ -88,7 +88,7 @@ export const FulfillDrawer = ({
     toast({
       title: "Transaction signed",
       description: `Transaction signed by ${account?.address}`,
-      className: "bg-white",
+      className: "bg-card",
     });
 
     const serialTx = getBase64EncodedWireTransaction(transactions[0]!);
@@ -104,7 +104,7 @@ export const FulfillDrawer = ({
     toast({
       title: "Transaction sent",
       description: "Transaction sent to the network",
-      className: "bg-white",
+      className: "bg-card",
     });
 
     if (confirmationErr) {
@@ -114,7 +114,7 @@ export const FulfillDrawer = ({
     toast({
       title: "Confirmed Transaction",
       description: "You successfully made a promise",
-      className: "bg-white",
+      className: "bg-card",
       action: (
         <ToastAction altText="View here" asChild>
           <a href={"https://solscan.io/tx/" + txSig} target="_blank">
@@ -152,7 +152,7 @@ export const FulfillDrawer = ({
         </div>
       </Drawer.Trigger>
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/40" />
+        <Drawer.Overlay className="fixed inset-0 bg-background/40" />
         <Drawer.Content
           className="fixed bottom-0 right-0 top-0 z-10 flex w-2/3 outline-hidden sm:w-1/2"
           // The gap between the edge of the screen and the drawer is 8px in this case.
@@ -162,7 +162,7 @@ export const FulfillDrawer = ({
             } as React.CSSProperties
           }
         >
-          <div className="flex h-full w-full grow flex-col place-content-between rounded-none bg-zinc-50 p-5">
+          <div className="flex h-full w-full grow flex-col place-content-between rounded-none bg-muted p-5">
             <div className="max-w-md place-content-between">
               <div>
                 <Drawer.Title className="mb-2 text-wrap wrap-break-word font-medium">
@@ -193,7 +193,7 @@ export const FulfillDrawer = ({
             <Drawer.Close asChild>
               <Button
                 type="submit"
-                className="w-full rounded-md bg-slate-900 text-white hover:bg-slate-800"
+                className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={async () => await handlePromiseRelease(id)}
               >
                 Release Promise
