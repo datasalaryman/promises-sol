@@ -2,6 +2,7 @@
 
 import { PromiseForm } from "@/app/_components/promise-form";
 import { useWalletUi } from "@wallet-ui/react";
+import { RequestForm } from "@/app/_components/request-form";
 
 export default function Home() {
   const { account, cluster } = useWalletUi();
@@ -11,7 +12,13 @@ export default function Home() {
         <h1 className="text-center text-xl font-bold text-foreground sm:text-2xl">
           Make and keep your own promises, with SOL!
         </h1>
-        {account ? <PromiseForm account={account} cluster={cluster} /> : <p>Please connect your wallet</p>}
+        {account ? 
+          <div className="flex flex-row gap-8 px-4">
+            <PromiseForm account={account} cluster={cluster} />
+            <RequestForm account={account} cluster={cluster} />
+          </div> : 
+          <p>Please connect your wallet</p>
+        }
       </div>
     </main>
   );
