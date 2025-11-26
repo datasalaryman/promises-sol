@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { promisesSelf, promisesPartner } from "@/server/db/schema";
+import { promisesSelf, promisesPartner, requestsPartner } from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
 
 export const promiseRouter = createTRPCRouter({
@@ -169,4 +169,38 @@ export const promiseRouter = createTRPCRouter({
         eq(promisesPartner.id, input.id),
       );
     }),
+  createRequest: publicProcedure
+    .input(
+      z.object({
+        content: z.string(),
+        epoch: z.bigint(),
+        lamports: z.bigint(),
+        creatorWallet: z.string(),
+        partnerWallet: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.creatorWallet === input.partnerWallet) {
+        throw new Error("Creator and partner cannot be the same");
+      }
+
+      await ctx.db.insert(requestsPartner).values({
+        promiseContent: input.content,
+        promiseEpoch: BigInt(input.epoch),
+        promiseLamports: BigInt(input.lamports),
+        creatorWallet: input.creatorWallet,
+        partnerWallet: input.partnerWallet,
+      });
+    }),
+  releaseRequest: publicProcedure
+    .input(
+      z.object({
+        id: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(requestsPartner).where(
+        eq(requestsPartner.id, input.id),
+      );
+    }), 
 });
