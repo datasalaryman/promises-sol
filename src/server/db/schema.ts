@@ -51,3 +51,19 @@ export const promisesPartner = createTable("promises_partner", {
   creatorWallet: tinytext("creator_wallet").notNull(),
   partnerWallet: tinytext("partner_wallet").notNull(),
 });
+
+export const requestsPartner = createTable("requests_partner", {
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: timestamp("updated_at").onUpdateNow(),
+  promiseContent: tinytext("promise_content"),
+  promiseEpoch: bigint("promise_epoch", { mode: "bigint", unsigned: true }),
+  promiseLamports: bigint("promise_lamports", {
+    mode: "bigint",
+    unsigned: true,
+  }),
+  creatorWallet: tinytext("creator_wallet").notNull(),
+  partnerWallet: tinytext("partner_wallet").notNull(),
+});
