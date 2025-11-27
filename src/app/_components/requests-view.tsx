@@ -6,12 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/trpc/react";
 import { type UiWalletAccount } from "@wallet-ui/react";
 import { DateTime } from "luxon";
+import { Copy } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface RequestsViewProps {
   account: UiWalletAccount;
 }
 
 export const RequestsView = ({ account }: RequestsViewProps) => {
+  const { toast } = useToast();
+
   // Fetch requests where the user is the creator (requests sent BY the user)
   const {
     data: requestsCreated,
@@ -25,6 +29,24 @@ export const RequestsView = ({ account }: RequestsViewProps) => {
     isLoading: isLoadingReceived,
     isError: isErrorReceived,
   } = api.promise.getRequestsByPartner.useQuery({ partner: account.address ?? "" });
+
+  const copyRequestLink = async (requestId: number) => {
+    const url = `${window.location.origin}/request/${requestId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied!",
+        description: "Request link has been copied to your clipboard.",
+        className: "bg-card",
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Failed to copy",
+        description: "Could not copy link to clipboard.",
+      });
+    }
+  };
 
   const epochToDateOnly = (epochSeconds: number): DateTime => {
     const currentDateMills =
@@ -153,7 +175,7 @@ export const RequestsView = ({ account }: RequestsViewProps) => {
                     : 0;
 
                   return (
-                    <div key={request.id} className="pb-2 pr-2">
+                    <div key={request.id} className="pb-2 pr-2 relative">
                       <Link href={`/request/${request.id}`}>
                         <Card className="h-40 w-80 cursor-pointer transition-shadow hover:shadow-lg">
                           <CardHeader className="pb-2">
@@ -177,6 +199,17 @@ export const RequestsView = ({ account }: RequestsViewProps) => {
                           </CardContent>
                         </Card>
                       </Link>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          copyRequestLink(request.id);
+                        }}
+                        className="absolute top-3 right-3 p-2 rounded-md hover:bg-accent transition-colors"
+                        title="Copy request link"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
                     </div>
                   );
                 })
