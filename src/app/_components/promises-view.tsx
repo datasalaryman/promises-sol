@@ -57,6 +57,7 @@ export const PromisesView = ({ account, cluster } : { account: UiWalletAccount, 
 
   return (
     <div className="max-w-full">
+      <h2 className="text-2xl font-bold mb-4">Your promises</h2>
       <div className="flex basis-1/2 flex-col flex-nowrap py-9 sm:flex-row sm:flex-wrap">
         <div className="pb-2 pr-2">
           <Link href="/">
