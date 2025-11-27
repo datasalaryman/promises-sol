@@ -24,31 +24,36 @@ import {
 interface RequestCardProps {
   account: UiWalletAccount;
   cluster: SolanaCluster;
-  promiseCreator: string;
-  partnerWallet: string;
-  promiseContent: string;
-  epochTime: number;
-  promiseLamports: number;
+  requestId: number;
 }
 
 export const RequestCard = ({ 
   account, 
   cluster, 
-  promiseCreator,
-  partnerWallet,
-  promiseContent,
-  epochTime,
-  promiseLamports 
+  requestId,
 }: RequestCardProps) => {
 
   const messageSigner = useWalletAccountTransactionSigner(account, cluster.id);
   const { toast } = useToast();
   
+  // Fetch request data by ID
+  const { data: requestData, isLoading, error } = api.promise.getOneRequest.useQuery({
+    id: requestId,
+  });
+
+  const createPartnerPromise = api.promise.createPartner.useMutation();
+  const deleteRequest = api.promise.releaseRequest.useMutation();
+
+  // Extract data from request
+  const promiseCreator = requestData?.creatorWallet ?? "";
+  const partnerWallet = requestData?.partnerWallet ?? "";
+  const promiseContent = requestData?.promiseContent ?? "";
+  const epochTime = requestData?.promiseEpoch ? Number(requestData.promiseEpoch) : 0;
+  const promiseLamports = requestData?.promiseLamports ? Number(requestData.promiseLamports) : 0;
+  
   // Check if the signed-in wallet matches the promiseCreator
   const isAuthorized = account?.address === promiseCreator;
   const isViewer = account?.address === partnerWallet;
-
-  const createPartnerPromise = api.promise.createPartner.useMutation();
 
   const { data: makePartnerTx, refetch: makePartnerRefetch } =
     api.solana.makePartnerPromiseGenerate.useQuery(
@@ -63,6 +68,8 @@ export const RequestCard = ({
         enabled: !!account && !!isAuthorized,
       },
     );
+
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,6 +132,11 @@ export const RequestCard = ({
         partnerWallet: partnerWallet,
       });
 
+      // Delete the request after successful promise creation
+      deleteRequest.mutate({
+        id: requestId,
+      });
+
       await makePartnerRefetch();
     } catch (err: unknown) {
       if (err instanceof TRPCClientError) {
@@ -180,6 +192,40 @@ export const RequestCard = ({
         return `${lamports / 1000000000} SOL`;
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-fit max-w-md py-5">
+        <Card>
+          <CardHeader>
+            <CardTitle>Promise Request</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 p-4 pt-0">
+            <p className="text-muted-foreground">Loading request...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !requestData) {
+    return (
+      <div className="min-h-fit max-w-md py-5">
+        <Card>
+          <CardHeader>
+            <CardTitle>Promise Request</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 p-4 pt-0">
+            <p className="text-muted-foreground">
+              Request not found or an error occurred.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!isAuthorized && !isViewer) {
     return (
