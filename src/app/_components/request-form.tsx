@@ -57,7 +57,7 @@ const { useAppForm } = createFormHook({
   formContext,
 })
 
-export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cluster: SolanaCluster }) => {
+export const RequestForm = ({ account, cluster, disabled }: { account: UiWalletAccount, cluster: SolanaCluster, disabled: boolean }) => {
 
   const [renderDate, setRenderDate] = useState<DateTime>(DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 }))
 
@@ -202,7 +202,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                   >{(field) => <field.Input
                       id="promise-creator"
                       placeholder="Enter promise creator's wallet address"
-                      disabled
+                      disabled={disabled}
                       value={field.state.value}
                       onChange={(e) => {
                         e.preventDefault()
@@ -221,7 +221,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                   id="promise"
                   placeholder="Enter your promise here..."
                   required
-                  disabled
+                  disabled={disabled}
                   value={field.state.value}
                   onChange={(e) => {
                     e.preventDefault()
@@ -244,7 +244,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        disabled
+                        disabled={disabled}
                         className={cn(
                           "w-full justify-start text-left font-normal",
                           !epochToDateOnly(formValues.epochTime).toJSDate() &&
@@ -261,7 +261,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                       <Calendar
                         className="bg-popover"
                         mode="single"
-                        disabled
+                        disabled={(date) => date < new Date()}
                         selected={epochToDateOnly(formValues.epochTime).toJSDate()}
                         onSelect={setEpochDate}
                         initialFocus={true}
@@ -281,7 +281,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                     <Select
                       value={epochToHourOnly(formValues.epochTime).toString()}
                       onValueChange={setEpochHour}
-                      disabled
+                      disabled={disabled}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Hour" />
@@ -338,7 +338,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                     value={field.state.value.toString()}
                     onValueChange={(value) => field.handleChange(parseInt(value))}
                     className="flex flex-col space-y-2"
-                    disabled
+                    disabled={disabled}
                   >
                     <div className="flex items-center space-x-2">
                       <field.RadioGroupItem value={"10000000"} id="small" />
@@ -362,7 +362,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
             <form.Button
               type="submit"
               className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled
+              disabled={disabled}
               onClick={async () => {
                 await form.handleSubmit();
               }}
