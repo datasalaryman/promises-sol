@@ -102,7 +102,7 @@ export const RequestsView = ({ account, cluster }: RequestsViewProps) => {
                     <Card className="h-40 w-80 cursor-pointer transition-shadow hover:shadow-lg">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">
-                          Request from
+                          Request to
                         </CardTitle>
                         <p className="truncate text-xs font-mono">
                           {request.creatorWallet}
