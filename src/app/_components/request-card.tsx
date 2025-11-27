@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { SolanaCluster, UiWalletAccount, useWalletAccountTransactionSigner } from "@wallet-ui/react";
+import { type SolanaCluster, type UiWalletAccount, useWalletAccountTransactionSigner } from "@wallet-ui/react";
 import { DateTime } from "luxon";
 import { api } from "@/trpc/react";
 import { trpc } from "@/trpc/vanilla";
@@ -15,10 +15,8 @@ import { TRPCClientError } from "@trpc/client";
 import { useRouter } from "next/navigation";
 
 import { 
-  decompileTransactionMessage, 
   getBase64EncodedWireTransaction, 
   getBase64Encoder, 
-  getCompiledTransactionMessageDecoder, 
   getTransactionDecoder, 
 } from "@solana/kit";
 
@@ -83,11 +81,8 @@ export const RequestCard = ({
 
       const transactionBytes = getBase64Encoder().encode(makePartnerTx.serialTx);
       const decoded = getTransactionDecoder().decode(transactionBytes);
-      const compiledTransaction = getCompiledTransactionMessageDecoder().decode(decoded.messageBytes);
-      const transaction = decompileTransactionMessage(compiledTransaction);
 
       const transactions = await messageSigner.modifyAndSignTransactions([decoded]);
-      const signatureBytes = transactions[0]!.signatures[messageSigner.address];
 
       toast({
         title: "Transaction signed",

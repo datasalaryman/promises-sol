@@ -4,15 +4,14 @@ import type React from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/trpc/react";
-import { SolanaCluster, UiWalletAccount } from "@wallet-ui/react";
+import { type UiWalletAccount } from "@wallet-ui/react";
 import { DateTime } from "luxon";
 
 interface RequestsViewProps {
   account: UiWalletAccount;
-  cluster: SolanaCluster;
 }
 
-export const RequestsView = ({ account, cluster }: RequestsViewProps) => {
+export const RequestsView = ({ account }: RequestsViewProps) => {
   // Fetch requests where the user is the creator (requests sent BY the user)
   const {
     data: requestsCreated,
@@ -84,7 +83,7 @@ export const RequestsView = ({ account, cluster }: RequestsViewProps) => {
       <div className="flex flex-col gap-8">
         {/* Section 1: Requests sent BY the user (user is creator) */}
         <div>
-          <h3 className="text-xl font-semibold mb-4">Requests You've Received</h3>
+          <h3 className="text-xl font-semibold mb-4">Requests You&apos;ve Received</h3>
           <div className="flex basis-1/2 flex-col flex-nowrap sm:flex-row sm:flex-wrap">
             {/* Requests created (where user is creator) */}
             {(requestsCreated?.length ?? 0) > 0
@@ -130,7 +129,7 @@ export const RequestsView = ({ account, cluster }: RequestsViewProps) => {
 
         {/* Section 2: Requests received BY the user (user is partner) */}
         <div>
-          <h3 className="text-xl font-semibold mb-4">Requests You've Sent</h3>
+          <h3 className="text-xl font-semibold mb-4">Requests You&apos;ve Sent</h3>
           <div className="flex basis-1/2 flex-col flex-nowrap sm:flex-row sm:flex-wrap">
             {/* Create new request card */}
             <div className="pb-2 pr-2">

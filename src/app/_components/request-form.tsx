@@ -23,12 +23,10 @@ import {
 } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SolanaCluster, UiWalletAccount, useWalletAccountTransactionSigner } from "@wallet-ui/react";
+import { type UiWalletAccount } from "@wallet-ui/react";
 import { DateTime } from "luxon";
 import { api } from "@/trpc/react";
-import { trpc } from "@/trpc/vanilla";
 import Link from "next/link";
-import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
 import { TRPCClientError } from "@trpc/client";
 import { Input } from "@/components/ui/input";
@@ -57,9 +55,9 @@ const { useAppForm } = createFormHook({
   formContext,
 })
 
-export const RequestForm = ({ account, cluster, disabled }: { account: UiWalletAccount, cluster: SolanaCluster, disabled: boolean }) => {
+export const RequestForm = ({ account, disabled }: { account: UiWalletAccount, disabled: boolean }) => {
 
-  const [renderDate, setRenderDate] = useState<DateTime>(DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 }))
+  const [renderDate ] = useState<DateTime>(DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 }))
 
   const { toast } = useToast();
 

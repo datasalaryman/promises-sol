@@ -14,7 +14,7 @@ export default function Home() {
         <TRPCReactProvider>
           {account ? <PromisesView account={account} cluster={cluster} /> : <p>Please connect your wallet</p>}
           <hr className="my-8 border-t border-border" />
-          {account ? <RequestsView account={account} cluster={cluster} /> : <p>Please connect your wallet</p>}
+          {account ? <RequestsView account={account} /> : <p>Please connect your wallet</p>}
         </TRPCReactProvider>
       </WalletContext>
     </main>

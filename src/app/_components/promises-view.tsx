@@ -1,12 +1,11 @@
 "use client";
 
 import type React from "react";
-import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import { FulfillDrawer } from "@/app/_components/fulfill-drawer";
-import { SolanaCluster, UiWalletAccount, useWalletUi } from "@wallet-ui/react";
+import { type SolanaCluster, type UiWalletAccount } from "@wallet-ui/react";
 import { DateTime } from "luxon";
 
 export const PromisesView = ({ account, cluster } : { account: UiWalletAccount, cluster: SolanaCluster }) => {
@@ -90,7 +89,7 @@ export const PromisesView = ({ account, cluster } : { account: UiWalletAccount, 
       <div className="flex flex-col gap-8">
         {/* Section 1: Promises the user made (self promises) */}
         <div>
-          <h3 className="text-xl font-semibold mb-4">Promises You've Made</h3>
+          <h3 className="text-xl font-semibold mb-4">Promises You&apos;ve Made</h3>
           <div className="flex basis-1/2 flex-col flex-nowrap sm:flex-row sm:flex-wrap">
             <div className="pb-2 pr-2">
               <Link href="/">
