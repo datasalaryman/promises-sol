@@ -28,6 +28,7 @@ import { DateTime } from "luxon";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { TRPCClientError } from "@trpc/client";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -100,6 +101,16 @@ export const RequestForm = ({ account, disabled }: { account: UiWalletAccount, d
           title: "Promise Request Created",
           description: "Your promise request has been sent successfully",
           className: "bg-card",
+          action: (
+            <ToastAction
+              altText="View requests"
+              asChild
+            >
+              <a href={`/dash`} target="_blank">
+                View Requests
+              </a>
+            </ToastAction>
+          ),
         }); 
       } catch (err: unknown) {
         if (err instanceof TRPCClientError) {
