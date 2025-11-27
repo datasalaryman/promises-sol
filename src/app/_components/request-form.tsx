@@ -363,11 +363,6 @@ export const RequestForm = ({ account, disabled }: { account: UiWalletAccount, d
               {account ? "Request Promise" : "Connect Wallet to Continue"}
             </form.Button>
           </form>
-          <div className="pt-2 text-center">
-            <Link href="/dash" className="text-xs text-muted-foreground underline">
-              View Promises
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>
