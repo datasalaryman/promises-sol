@@ -15,7 +15,7 @@ export default function Home() {
         {account ? 
           <div className="flex flex-row gap-8 px-4">
             <PromiseForm account={account} cluster={cluster} />
-            <RequestForm account={account} cluster={cluster} />
+            <RequestForm account={account} disabled={true}/>
           </div> : 
           <p>Please connect your wallet</p>
         }

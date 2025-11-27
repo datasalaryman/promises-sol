@@ -23,28 +23,16 @@ import {
 } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SolanaCluster, UiWalletAccount, useWalletAccountTransactionSigner } from "@wallet-ui/react";
+import { type UiWalletAccount } from "@wallet-ui/react";
 import { DateTime } from "luxon";
 import { api } from "@/trpc/react";
-import { trpc } from "@/trpc/vanilla";
 import Link from "next/link";
-import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
 import { TRPCClientError } from "@trpc/client";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 
 import { createFormHook, createFormHookContexts, useStore } from "@tanstack/react-form";
-import { 
-  type Address, 
-  decompileTransactionMessage, 
-  getBase64EncodedWireTransaction, 
-  getBase64Encoder, 
-  getCompiledTransactionMessageDecoder, 
-  getTransactionDecoder, 
-  isOffCurveAddress, 
-} from "@solana/kit";
 
 
 const { fieldContext, formContext } = createFormHookContexts()
@@ -67,14 +55,13 @@ const { useAppForm } = createFormHook({
   formContext,
 })
 
-export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cluster: SolanaCluster }) => {
+export const RequestForm = ({ account, disabled }: { account: UiWalletAccount, disabled: boolean }) => {
 
-  const [renderDate, setRenderDate] = useState<DateTime>(DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 }))
+  const [renderDate ] = useState<DateTime>(DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 }))
 
-  // const { signTransaction } = useWallet();
-  const messageSigner = useWalletAccountTransactionSigner(account, cluster.id);
   const { toast } = useToast();
 
+  const createRequest = api.promise.createRequest.useMutation();
 
   const form = useAppForm({
     defaultValues: {
@@ -84,9 +71,53 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
       promiseLamports: 10000000,
     },
     onSubmit: async ({ value }) => {
+      try {
+        if (!account?.address) {
+          throw new Error("Wallet not connected");
+        }
+
+        if (!value.promiseCreator) {
+          throw new Error("Please enter the promise creator's wallet address");
+        }
+
+        if (!value.promiseContent) {
+          throw new Error("Please enter a promise");
+        }
+
+        if (value.promiseCreator === account.address) {
+          throw new Error("You cannot request a promise from yourself");
+        }
+
+        createRequest.mutate({
+          content: value.promiseContent,
+          epoch: BigInt(value.epochTime),
+          lamports: BigInt(value.promiseLamports),
+          creatorWallet: value.promiseCreator,
+          partnerWallet: account.address,
+        });
+
+        toast({
+          title: "Promise Request Created",
+          description: "Your promise request has been sent successfully",
+          className: "bg-card",
+        }); 
+      } catch (err: unknown) {
+        if (err instanceof TRPCClientError) {
+          toast({
+            variant: "destructive",
+            title: "TRPC Client Error",
+            description: `${JSON.stringify(err.shape)}`,
+          });
+        } else if (err instanceof Error) {
+          toast({
+            variant: "destructive",
+            title: "Request Failed",
+            description: err.message,
+          });
+        }
+      }
       form.reset();
     }
-
   })
 
   const formValues = useStore(form.store, (state) => state.values)
@@ -141,6 +172,8 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
   };
 
 
+
+
   return (
     <div className="min-h-fit max-w-md py-5">
       <Card>
@@ -151,10 +184,6 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
         </CardHeader>
         <CardContent className="space-y-2 p-4 pt-0">
           <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              await form.handleSubmit();
-            }}
             className="space-y-6"
           >
 
@@ -165,9 +194,13 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                     name="promiseCreator"
                   >{(field) => <field.Input
                       id="promise-creator"
-                      placeholder="Enter partner wallet address"
-                      disabled
+                      placeholder="Enter promise creator's wallet address"
+                      disabled={disabled}
                       value={field.state.value}
+                      onChange={(e) => {
+                        e.preventDefault()
+                        field.handleChange(e.target.value)
+                      }}
                       />}
                   </form.AppField>
             </form.Subscribe>
@@ -180,8 +213,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                 <field.Textarea
                   id="promise"
                   placeholder="Enter your promise here..."
-                  required
-                  disabled
+                  disabled={disabled}
                   value={field.state.value}
                   onChange={(e) => {
                     e.preventDefault()
@@ -204,7 +236,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        disabled
+                        disabled={disabled}
                         className={cn(
                           "w-full justify-start text-left font-normal",
                           !epochToDateOnly(formValues.epochTime).toJSDate() &&
@@ -221,7 +253,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                       <Calendar
                         className="bg-popover"
                         mode="single"
-                        disabled
+                        disabled={(date) => date < new Date()}
                         selected={epochToDateOnly(formValues.epochTime).toJSDate()}
                         onSelect={setEpochDate}
                         initialFocus={true}
@@ -241,7 +273,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                     <Select
                       value={epochToHourOnly(formValues.epochTime).toString()}
                       onValueChange={setEpochHour}
-                      disabled
+                      disabled={disabled}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Hour" />
@@ -257,7 +289,10 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                       </SelectContent>
                     </Select>
 
-                    <Select defaultValue={"0"} onValueChange={setEpochMinute} disabled>
+                    <Select 
+                      value={epochToMinuteOnly(formValues.epochTime).toString()}
+                      onValueChange={setEpochMinute}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Min" />
                       </SelectTrigger>
@@ -295,7 +330,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                     value={field.state.value.toString()}
                     onValueChange={(value) => field.handleChange(parseInt(value))}
                     className="flex flex-col space-y-2"
-                    disabled
+                    disabled={disabled}
                   >
                     <div className="flex items-center space-x-2">
                       <field.RadioGroupItem value={"10000000"} id="small" />
@@ -319,12 +354,12 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
             <form.Button
               type="submit"
               className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled
+              disabled={disabled || (!account && !formValues.promiseCreator) || !formValues.promiseContent}
               onClick={async () => {
                 await form.handleSubmit();
               }}
             >
-              {account ? "Make Promise" : "Connect Wallet to Continue"}
+              {account ? "Request Promise" : "Connect Wallet to Continue"}
             </form.Button>
           </form>
           <div className="pt-2 text-center">

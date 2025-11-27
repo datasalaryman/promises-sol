@@ -4,6 +4,7 @@ import { WalletContext } from "@/app/_contexts/Wallet";
 import { TRPCReactProvider } from "@/trpc/react";
 import { PromisesView } from "@/app/_components/promises-view";
 import { useWalletUi } from "@wallet-ui/react";
+import { RequestsView } from "../_components/requests-view";
 
 export default function Home() {
   const { account, cluster } = useWalletUi();
@@ -11,8 +12,9 @@ export default function Home() {
     <main className="flex h-screen w-full flex-col px-4 sm:px-28">
       <WalletContext>
         <TRPCReactProvider>
-          <h1 className="py-9 text-xl font-bold"> Your Promises</h1>
           {account ? <PromisesView account={account} cluster={cluster} /> : <p>Please connect your wallet</p>}
+          <hr className="my-8 border-t border-border" />
+          {account ? <RequestsView account={account} /> : <p>Please connect your wallet</p>}
         </TRPCReactProvider>
       </WalletContext>
     </main>

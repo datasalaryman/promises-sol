@@ -14,8 +14,6 @@ import {
   appendTransactionMessageInstruction,
   pipe,
   blockhash as blockhashHelper,
-  compileTransactionMessage,
-  getCompiledTransactionMessageEncoder,
   type TransactionSigner,
   compileTransaction,
   getBase64EncodedWireTransaction,

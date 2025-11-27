@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useState } from "react";
-import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -24,12 +23,11 @@ import {
 } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SolanaCluster, UiWalletAccount, useWalletAccountTransactionSigner } from "@wallet-ui/react";
+import { type SolanaCluster, type UiWalletAccount, useWalletAccountTransactionSigner } from "@wallet-ui/react";
 import { DateTime } from "luxon";
 import { api } from "@/trpc/react";
 import { trpc } from "@/trpc/vanilla";
 import Link from "next/link";
-import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { TRPCClientError } from "@trpc/client";
@@ -39,10 +37,8 @@ import { Switch } from "@/components/ui/switch";
 import { createFormHook, createFormHookContexts, useStore } from "@tanstack/react-form";
 import { 
   type Address, 
-  decompileTransactionMessage, 
   getBase64EncodedWireTransaction, 
   getBase64Encoder, 
-  getCompiledTransactionMessageDecoder, 
   getTransactionDecoder, 
   isOffCurveAddress, 
 } from "@solana/kit";
@@ -70,7 +66,7 @@ const { useAppForm } = createFormHook({
 
 export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cluster: SolanaCluster }) => {
 
-  const [renderDate, setRenderDate] = useState<DateTime>(DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 }))
+  const [renderDate ] = useState<DateTime>(DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 }))
 
   // const { signTransaction } = useWallet();
   const messageSigner = useWalletAccountTransactionSigner(account, cluster.id);
@@ -93,14 +89,8 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
         const transactionBytes = getBase64Encoder().encode(value.isPartner ? makePartnerTx.serialTx : makeTx.serialTx);
 
         const decoded = getTransactionDecoder().decode(transactionBytes);
-        const compiledTransaction = getCompiledTransactionMessageDecoder().decode(decoded.messageBytes);
-        const transaction = decompileTransactionMessage(compiledTransaction);
-        
-        // const signedTransaction = await signTransaction!(transaction);
-
 
         const transactions = await messageSigner.modifyAndSignTransactions([decoded]);
-        const signatureBytes = transactions[0]!.signatures[messageSigner.address];
 
         toast({
           title: "Transaction signed",
@@ -176,8 +166,6 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
           await (value.isPartner ? makePartnerRefetch() : makeRefetch());
         }
       }
-
-      form.reset();
     }
 
   })
@@ -280,10 +268,6 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
         </CardHeader>
         <CardContent className="space-y-2 p-4 pt-0">
           <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              await form.handleSubmit();
-            }}
             className="space-y-6"
           >
             <div className="space-y-2">
@@ -507,9 +491,10 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
             <form.Button
               type="submit"
               className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={!account || (!account && formValues.isPartner && !formValues.partnerWallet)}
+              disabled={!account || (formValues.isPartner && !formValues.partnerWallet && !formValues.promiseContent) || !formValues.promiseContent}
               onClick={async () => {
                 await form.handleSubmit();
+                form.reset();
               }}
             >
               {account ? "Make Promise" : "Connect Wallet to Continue"}

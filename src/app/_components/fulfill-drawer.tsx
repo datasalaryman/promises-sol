@@ -10,8 +10,8 @@ import { trpc } from "@/trpc/vanilla";
 import { ToastAction } from "@/components/ui/toast";
 import { useState } from "react";
 import { DateTime } from "luxon";
-import { getBase64Decoder, getBase64EncodedWireTransaction, getBase64Encoder, getCompiledTransactionMessageDecoder, getTransactionDecoder } from "@solana/kit";
-import { SolanaCluster, UiWalletAccount, useWalletAccountTransactionSigner } from "@wallet-ui/react";
+import { getBase64EncodedWireTransaction, getBase64Encoder, getTransactionDecoder } from "@solana/kit";
+import { type SolanaCluster, type UiWalletAccount, useWalletAccountTransactionSigner } from "@wallet-ui/react";
 
 type FulfillDrawerProps = {
   id: number;
@@ -41,7 +41,7 @@ export const FulfillDrawer = ({
     api.promise.releaseSelf.useMutation() :
     api.promise.releasePartner.useMutation();
 
-  const { data: fulfillTxSelf, refetch: fulfillRefetchSelf } =
+  const { data: fulfillTxSelf } =
     api.solana.fulfillSelfPromiseGenerate.useQuery(
       {
         text: promiseContent,
@@ -55,7 +55,7 @@ export const FulfillDrawer = ({
       },
     );
 
-  const { data: fulfillTxPartner, refetch: fulfillRefetchPartner } =
+  const { data: fulfillTxPartner } =
     api.solana.fulfillPartnerPromiseGenerate.useQuery(
       {
         text: promiseContent,
@@ -80,8 +80,6 @@ export const FulfillDrawer = ({
       getTransactionDecoder().decode(
         getBase64Encoder().encode(fulfillTxPartner?.serialTx),
       );
-
-    const txCompiled = getCompiledTransactionMessageDecoder().decode(txDeserialized.messageBytes);
 
     const transactions = await messageSigner.modifyAndSignTransactions([txDeserialized]);
 

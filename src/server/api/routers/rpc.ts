@@ -6,7 +6,7 @@ import {
   createSolanaRpc,
   getTransactionDecoder,
   getSignatureFromTransaction,
-  Base64EncodedWireTransaction,
+  type Base64EncodedWireTransaction,
 } from "@solana/kit";
 
 const rpc = createSolanaRpc(env.RPC_URL);
@@ -26,7 +26,7 @@ export const rpcRouter = createTRPCRouter({
         confirmationErr: z.string().nullish(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
 
       let confirmationErr: string | null = null;
 
