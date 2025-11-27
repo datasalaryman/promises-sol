@@ -12,6 +12,7 @@ import { trpc } from "@/trpc/vanilla";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { TRPCClientError } from "@trpc/client";
+import { useRouter } from "next/navigation";
 
 import { 
   decompileTransactionMessage, 
@@ -35,6 +36,7 @@ export const RequestCard = ({
 
   const messageSigner = useWalletAccountTransactionSigner(account, cluster.id);
   const { toast } = useToast();
+  const router = useRouter();
   
   // Fetch request data by ID
   const { data: requestData, isLoading, error } = api.promise.getOneRequest.useQuery({
@@ -155,6 +157,8 @@ export const RequestCard = ({
         await makePartnerRefetch();
       }
     }
+    // Redirect to dashboard
+    router.push("/dash");
   };
 
   const epochToDateOnly = (epochSeconds: number): DateTime => {
