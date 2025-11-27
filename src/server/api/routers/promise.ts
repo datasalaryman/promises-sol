@@ -192,6 +192,59 @@ export const promiseRouter = createTRPCRouter({
         partnerWallet: input.partnerWallet,
       });
     }),
+  getAllRequests: publicProcedure
+    .input(
+      z.object({
+        partner: z.string(),
+      }),
+    )
+    .output(
+      z
+        .object({
+          id: z.number(),
+          createdAt: z.date(),
+          updatedAt: z.date().nullable(),
+          promiseContent: z.string().nullable(),
+          promiseEpoch: z.bigint().nullable(),
+          promiseLamports: z.bigint().nullable(),
+          creatorWallet: z.string(),
+          partnerWallet: z.string(),
+        })
+        .array(),
+    )
+    .query(async ({ ctx, input }) => {
+      const requests = await ctx.db.query.requestsPartner.findMany({
+        where: eq(requestsPartner.partnerWallet, input.partner),
+        orderBy: desc(requestsPartner.promiseEpoch),
+      });
+      return requests;
+    }),
+  getOneRequest: publicProcedure
+    .input(
+      z.object({
+        id: z.number(),
+      }),
+    )
+    .output(
+      z
+        .object({
+          id: z.number(),
+          createdAt: z.date(),
+          updatedAt: z.date().nullable(),
+          promiseContent: z.string().nullable(),
+          promiseEpoch: z.bigint().nullable(),
+          promiseLamports: z.bigint().nullable(),
+          creatorWallet: z.string(),
+          partnerWallet: z.string(),
+        })
+        .nullish(),
+    )
+    .query(async ({ ctx, input }) => {
+      const request = await ctx.db.query.requestsPartner.findFirst({
+        where: eq(requestsPartner.id, input.id),
+      });
+      return request;
+    }),
   releaseRequest: publicProcedure
     .input(
       z.object({
