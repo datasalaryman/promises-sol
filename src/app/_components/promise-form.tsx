@@ -176,8 +176,6 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
           await (value.isPartner ? makePartnerRefetch() : makeRefetch());
         }
       }
-
-      form.reset();
     }
 
   })
@@ -280,10 +278,6 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
         </CardHeader>
         <CardContent className="space-y-2 p-4 pt-0">
           <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              await form.handleSubmit();
-            }}
             className="space-y-6"
           >
             <div className="space-y-2">
@@ -507,9 +501,10 @@ export const PromiseForm = ({ account, cluster }: { account: UiWalletAccount, cl
             <form.Button
               type="submit"
               className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={!account || (!account && formValues.isPartner && !formValues.partnerWallet)}
+              disabled={!account || (formValues.isPartner && !formValues.partnerWallet && !formValues.promiseContent) || !formValues.promiseContent}
               onClick={async () => {
                 await form.handleSubmit();
+                form.reset();
               }}
             >
               {account ? "Make Promise" : "Connect Wallet to Continue"}

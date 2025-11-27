@@ -102,9 +102,7 @@ export const RequestForm = ({ account, cluster, disabled }: { account: UiWalletA
           title: "Promise Request Created",
           description: "Your promise request has been sent successfully",
           className: "bg-card",
-        });
-
-        form.reset();
+        }); 
       } catch (err: unknown) {
         if (err instanceof TRPCClientError) {
           toast({
@@ -120,6 +118,7 @@ export const RequestForm = ({ account, cluster, disabled }: { account: UiWalletA
           });
         }
       }
+      form.reset();
     }
   })
 
@@ -187,10 +186,6 @@ export const RequestForm = ({ account, cluster, disabled }: { account: UiWalletA
         </CardHeader>
         <CardContent className="space-y-2 p-4 pt-0">
           <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              await form.handleSubmit();
-            }}
             className="space-y-6"
           >
 
@@ -220,7 +215,6 @@ export const RequestForm = ({ account, cluster, disabled }: { account: UiWalletA
                 <field.Textarea
                   id="promise"
                   placeholder="Enter your promise here..."
-                  required
                   disabled={disabled}
                   value={field.state.value}
                   onChange={(e) => {
@@ -362,7 +356,7 @@ export const RequestForm = ({ account, cluster, disabled }: { account: UiWalletA
             <form.Button
               type="submit"
               className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={disabled}
+              disabled={disabled || (!account && !formValues.promiseCreator) || !formValues.promiseContent}
               onClick={async () => {
                 await form.handleSubmit();
               }}
