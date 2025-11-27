@@ -292,6 +292,7 @@ export const RequestForm = ({ account, disabled }: { account: UiWalletAccount, d
                     <Select 
                       value={epochToMinuteOnly(formValues.epochTime).toString()}
                       onValueChange={setEpochMinute}
+                      disabled={disabled}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Min" />
