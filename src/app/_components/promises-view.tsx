@@ -10,17 +10,19 @@ import { SolanaCluster, UiWalletAccount, useWalletUi } from "@wallet-ui/react";
 
 export const PromisesView = ({ account, cluster } : { account: UiWalletAccount, cluster: SolanaCluster }) => {
 
+  // Promises made by the user (self promises)
   const {
     data: resultSelf,
     isLoading: isLoadingSelf,
     isError: isErrorSelf,
   } = api.promise.getAllSelf.useQuery({ wallet: account.address ?? "" });
 
+  // Promises the user has to fulfill (user is partner)
   const {
     data: resultPartner,
     isLoading: isLoadingPartner,
     isError: isErrorPartner,
-  } = api.promise.getAllPartner.useQuery({ partner: account.address ?? "" });
+  } = api.promise.getPartnerPromisesByPartner.useQuery({ partner: account.address ?? "" });
 
 
   if (isLoadingSelf || isLoadingPartner) {
@@ -58,50 +60,63 @@ export const PromisesView = ({ account, cluster } : { account: UiWalletAccount, 
   return (
     <div className="max-w-full">
       <h2 className="text-2xl font-bold mb-4">Your promises</h2>
-      <div className="flex basis-1/2 flex-col flex-nowrap py-9 sm:flex-row sm:flex-wrap">
-        <div className="pb-2 pr-2">
-          <Link href="/">
-            <Card className="h-40 w-80 outline-dashed">
-              <CardContent className="h-full w-full content-center items-center space-y-8 text-center">
-                Create a promise
-              </CardContent>
-            </Card>
-          </Link>
+      <div className="flex flex-col gap-8">
+        {/* Section 1: Promises the user made (self promises) */}
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Promises You've Made</h3>
+          <div className="flex basis-1/2 flex-col flex-nowrap sm:flex-row sm:flex-wrap">
+            <div className="pb-2 pr-2">
+              <Link href="/">
+                <Card className="h-40 w-80 outline-dashed">
+                  <CardContent className="h-full w-full content-center items-center space-y-8 text-center">
+                    Create a promise
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+            {(resultSelf?.length ?? 0 > 0)
+              ? resultSelf?.map((promise) => {
+                  return (
+                    <FulfillDrawer
+                      key={promise.id}
+                      id={promise.id}
+                      promiseContent={promise.promiseContent ?? ""}
+                      promiseEpoch={promise.promiseEpoch?.toString() ?? ""}
+                      promiseLamports={promise.promiseLamports ?? 0n}
+                      variant="self"
+                      creatorWallet={null}
+                      account={account}
+                      cluster={cluster}
+                    />
+                  );
+                })
+              : null}
+          </div>
         </div>
-        {(resultSelf?.length ?? 0 > 0)
-          ? resultSelf?.map((promise) => {
-              return (
-                <FulfillDrawer
-                  key={promise.id}
-                  id={promise.id}
-                  promiseContent={promise.promiseContent ?? ""}
-                  promiseEpoch={promise.promiseEpoch?.toString() ?? ""}
-                  promiseLamports={promise.promiseLamports ?? 0n}
-                  variant="self"
-                  creatorWallet={null}
-                  account={account}
-                  cluster={cluster}
-                />
-              );
-            })
-          : null}
-        {(resultPartner?.length ?? 0 > 0)
-          ? resultPartner?.map((promise) => {
-              return (
-                <FulfillDrawer
-                  key={promise.id}
-                  id={promise.id}
-                  promiseContent={promise.promiseContent ?? ""}
-                  promiseEpoch={promise.promiseEpoch?.toString() ?? ""}
-                  promiseLamports={promise.promiseLamports ?? 0n}
-                  variant="partner"
-                  creatorWallet={promise.creatorWallet ?? null}
-                  account={account}
-                  cluster={cluster}
-                />
-              );
-            })
-          : null}
+
+        {/* Section 2: Promises the user has to fulfill (user is partner) */}
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Promises to Fulfill</h3>
+          <div className="flex basis-1/2 flex-col flex-nowrap sm:flex-row sm:flex-wrap">
+            {(resultPartner?.length ?? 0 > 0)
+              ? resultPartner?.map((promise) => {
+                  return (
+                    <FulfillDrawer
+                      key={promise.id}
+                      id={promise.id}
+                      promiseContent={promise.promiseContent ?? ""}
+                      promiseEpoch={promise.promiseEpoch?.toString() ?? ""}
+                      promiseLamports={promise.promiseLamports ?? 0n}
+                      variant="partner"
+                      creatorWallet={promise.creatorWallet ?? null}
+                      account={account}
+                      cluster={cluster}
+                    />
+                  );
+                })
+              : null}
+          </div>
+        </div>
       </div>
     </div>
   );

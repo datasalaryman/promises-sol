@@ -13,12 +13,19 @@ interface RequestsViewProps {
 }
 
 export const RequestsView = ({ account, cluster }: RequestsViewProps) => {
+  // Fetch requests where the user is the creator (requests sent BY the user)
+  const {
+    data: requestsCreated,
+    isLoading: isLoadingCreated,
+    isError: isErrorCreated,
+  } = api.promise.getRequestsByCreator.useQuery({ creator: account.address ?? "" });
+
   // Fetch requests where the user is the partner (requests sent TO the user)
   const {
     data: requestsReceived,
     isLoading: isLoadingReceived,
     isError: isErrorReceived,
-  } = api.promise.getAllRequests.useQuery({ partner: account.address ?? "" });
+  } = api.promise.getRequestsByPartner.useQuery({ partner: account.address ?? "" });
 
   const epochToDateOnly = (epochSeconds: number): DateTime => {
     const currentDateMills =
@@ -39,7 +46,7 @@ export const RequestsView = ({ account, cluster }: RequestsViewProps) => {
     }
   };
 
-  if (isLoadingReceived) {
+  if (isLoadingReceived || isLoadingCreated) {
     return (
       <div className="max-w-full">
         <div className="flex basis-1/2 flex-col flex-nowrap py-9 sm:flex-row sm:flex-wrap">
@@ -55,7 +62,7 @@ export const RequestsView = ({ account, cluster }: RequestsViewProps) => {
     );
   }
 
-  if (isErrorReceived) {
+  if (isErrorReceived || isErrorCreated) {
     return (
       <div className="max-w-full">
         <div className="flex basis-1/2 flex-col flex-nowrap items-center py-9 sm:flex-wrap">
@@ -74,57 +81,109 @@ export const RequestsView = ({ account, cluster }: RequestsViewProps) => {
   return (
     <div className="max-w-full">
       <h2 className="text-2xl font-bold mb-4">Your requests</h2>
-      <div className="flex basis-1/2 flex-col flex-nowrap py-9 sm:flex-row sm:flex-wrap">
-        {/* Create new request card */}
-        <div className="pb-2 pr-2">
-          <Link href="/">
-            <Card className="h-40 w-80 outline-dashed">
-              <CardContent className="h-full w-full content-center items-center space-y-8 text-center">
-                Create a request
-              </CardContent>
-            </Card>
-          </Link>
+      <div className="flex flex-col gap-8">
+        {/* Section 1: Requests sent BY the user (user is creator) */}
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Requests You've Received</h3>
+          <div className="flex basis-1/2 flex-col flex-nowrap sm:flex-row sm:flex-wrap">
+            {/* Requests created (where user is creator) */}
+            {(requestsCreated?.length ?? 0) > 0
+              ? requestsCreated?.map((request) => {
+                  const epochTime = request.promiseEpoch
+                    ? Number(request.promiseEpoch)
+                    : 0;
+                  const promiseLamports = request.promiseLamports
+                    ? Number(request.promiseLamports)
+                    : 0;
+
+                  return (
+                    <div key={request.id} className="pb-2 pr-2">
+                      <Link href={`/request/${request.id}`}>
+                        <Card className="h-40 w-80 cursor-pointer transition-shadow hover:shadow-lg">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                              Request to
+                            </CardTitle>
+                            <p className="truncate text-xs font-mono">
+                              {request.partnerWallet}
+                            </p>
+                          </CardHeader>
+                          <CardContent className="space-y-1">
+                            <p className="line-clamp-2 text-sm">
+                              {request.promiseContent}
+                            </p>
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>
+                                Due: {epochToDateOnly(epochTime).toISODate()}
+                              </span>
+                              <span>{getLamportsLabel(promiseLamports)}</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </div>
+                  );
+                })
+              : null}
+          </div>
         </div>
 
-        {/* Requests received (where user is partner) */}
-        {(requestsReceived?.length ?? 0) > 0
-          ? requestsReceived?.map((request) => {
-              const epochTime = request.promiseEpoch
-                ? Number(request.promiseEpoch)
-                : 0;
-              const promiseLamports = request.promiseLamports
-                ? Number(request.promiseLamports)
-                : 0;
+        {/* Section 2: Requests received BY the user (user is partner) */}
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Requests You've Sent</h3>
+          <div className="flex basis-1/2 flex-col flex-nowrap sm:flex-row sm:flex-wrap">
+            {/* Create new request card */}
+            <div className="pb-2 pr-2">
+              <Link href="/">
+                <Card className="h-40 w-80 outline-dashed">
+                  <CardContent className="h-full w-full content-center items-center space-y-8 text-center">
+                    Create a request
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
 
-              return (
-                <div key={request.id} className="pb-2 pr-2">
-                  <Link href={`/request/${request.id}`}>
-                    <Card className="h-40 w-80 cursor-pointer transition-shadow hover:shadow-lg">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                          Request to
-                        </CardTitle>
-                        <p className="truncate text-xs font-mono">
-                          {request.creatorWallet}
-                        </p>
-                      </CardHeader>
-                      <CardContent className="space-y-1">
-                        <p className="line-clamp-2 text-sm">
-                          {request.promiseContent}
-                        </p>
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>
-                            Due: {epochToDateOnly(epochTime).toISODate()}
-                          </span>
-                          <span>{getLamportsLabel(promiseLamports)}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </div>
-              );
-            })
-          : null}
+            {/* Requests received (where user is partner) */}
+            {(requestsReceived?.length ?? 0) > 0
+              ? requestsReceived?.map((request) => {
+                  const epochTime = request.promiseEpoch
+                    ? Number(request.promiseEpoch)
+                    : 0;
+                  const promiseLamports = request.promiseLamports
+                    ? Number(request.promiseLamports)
+                    : 0;
+
+                  return (
+                    <div key={request.id} className="pb-2 pr-2">
+                      <Link href={`/request/${request.id}`}>
+                        <Card className="h-40 w-80 cursor-pointer transition-shadow hover:shadow-lg">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                              Request from
+                            </CardTitle>
+                            <p className="truncate text-xs font-mono">
+                              {request.creatorWallet}
+                            </p>
+                          </CardHeader>
+                          <CardContent className="space-y-1">
+                            <p className="line-clamp-2 text-sm">
+                              {request.promiseContent}
+                            </p>
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>
+                                Due: {epochToDateOnly(epochTime).toISODate()}
+                              </span>
+                              <span>{getLamportsLabel(promiseLamports)}</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </div>
+                  );
+                })
+              : null}
+          </div>
+        </div>
       </div>
     </div>
   );
