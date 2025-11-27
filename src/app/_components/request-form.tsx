@@ -30,21 +30,11 @@ import { trpc } from "@/trpc/vanilla";
 import Link from "next/link";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
 import { TRPCClientError } from "@trpc/client";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 
 import { createFormHook, createFormHookContexts, useStore } from "@tanstack/react-form";
-import { 
-  type Address, 
-  decompileTransactionMessage, 
-  getBase64EncodedWireTransaction, 
-  getBase64Encoder, 
-  getCompiledTransactionMessageDecoder, 
-  getTransactionDecoder, 
-  isOffCurveAddress, 
-} from "@solana/kit";
 
 
 const { fieldContext, formContext } = createFormHookContexts()
@@ -71,10 +61,9 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
 
   const [renderDate, setRenderDate] = useState<DateTime>(DateTime.now().setZone("utc").set({ hour: DateTime.now().setZone("utc").hour + 1, minute: 0 }))
 
-  // const { signTransaction } = useWallet();
-  const messageSigner = useWalletAccountTransactionSigner(account, cluster.id);
   const { toast } = useToast();
 
+  const createRequest = api.promise.createRequest.useMutation();
 
   const form = useAppForm({
     defaultValues: {
@@ -84,9 +73,54 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
       promiseLamports: 10000000,
     },
     onSubmit: async ({ value }) => {
-      form.reset();
-    }
+      try {
+        if (!account?.address) {
+          throw new Error("Wallet not connected");
+        }
 
+        if (!value.promiseCreator) {
+          throw new Error("Please enter the promise creator's wallet address");
+        }
+
+        if (!value.promiseContent) {
+          throw new Error("Please enter a promise");
+        }
+
+        if (value.promiseCreator === account.address) {
+          throw new Error("You cannot request a promise from yourself");
+        }
+
+        createRequest.mutate({
+          content: value.promiseContent,
+          epoch: BigInt(value.epochTime),
+          lamports: BigInt(value.promiseLamports),
+          creatorWallet: value.promiseCreator,
+          partnerWallet: account.address,
+        });
+
+        toast({
+          title: "Promise Request Created",
+          description: "Your promise request has been sent successfully",
+          className: "bg-card",
+        });
+
+        form.reset();
+      } catch (err: unknown) {
+        if (err instanceof TRPCClientError) {
+          toast({
+            variant: "destructive",
+            title: "TRPC Client Error",
+            description: `${JSON.stringify(err.shape)}`,
+          });
+        } else if (err instanceof Error) {
+          toast({
+            variant: "destructive",
+            title: "Request Failed",
+            description: err.message,
+          });
+        }
+      }
+    }
   })
 
   const formValues = useStore(form.store, (state) => state.values)
@@ -141,6 +175,8 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
   };
 
 
+
+
   return (
     <div className="min-h-fit max-w-md py-5">
       <Card>
@@ -165,9 +201,13 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                     name="promiseCreator"
                   >{(field) => <field.Input
                       id="promise-creator"
-                      placeholder="Enter partner wallet address"
+                      placeholder="Enter promise creator's wallet address"
                       disabled
                       value={field.state.value}
+                      onChange={(e) => {
+                        e.preventDefault()
+                        field.handleChange(e.target.value)
+                      }}
                       />}
                   </form.AppField>
             </form.Subscribe>
@@ -257,7 +297,10 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                       </SelectContent>
                     </Select>
 
-                    <Select defaultValue={"0"} onValueChange={setEpochMinute} disabled>
+                    <Select 
+                      value={epochToMinuteOnly(formValues.epochTime).toString()}
+                      onValueChange={setEpochMinute}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Min" />
                       </SelectTrigger>
@@ -324,7 +367,7 @@ export const RequestForm = ({ account, cluster }: { account: UiWalletAccount, cl
                 await form.handleSubmit();
               }}
             >
-              {account ? "Make Promise" : "Connect Wallet to Continue"}
+              {account ? "Request Promise" : "Connect Wallet to Continue"}
             </form.Button>
           </form>
           <div className="pt-2 text-center">
